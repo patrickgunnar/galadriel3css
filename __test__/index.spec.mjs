@@ -1,7 +1,7 @@
 import test from 'ava'
 
-import { sum } from '../index.js'
+import { dummySum } from '../index.js'
 
-test('sum from native', (t) => {
-  t.is(sum(1, 2), 3)
+test('dummySum from native', (t) => {
+  t.is(dummySum(4, 2), "The current sum is equal to 6")
 })
