@@ -749,6 +749,10 @@ __metadata:
   dependencies:
     "@napi-rs/cli": "npm:^2.17.0"
     ava: "npm:^5.1.1"
+  bin:
+    galadriel: src/cli.js
+    galadriel3css: src/cli.js
+    galadrielcss: src/cli.js
   languageName: unknown
   linkType: soft
 

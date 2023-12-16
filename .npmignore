@@ -11,4 +11,4 @@ yarn.lock
 .yarn
 __test__
 renovate.json
-test.js
+./test.js
