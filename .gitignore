@@ -196,4 +196,4 @@ Cargo.lock
 
 *.node
 
-test.js
+./test.js
