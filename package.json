@@ -1,7 +1,7 @@
 {
   "name": "galadriel3css",
   "version": "0.1.0",
-  "description": "Galadriel3css: JavaScript object-based approach to create utility-first styles.",
+  "description": "Galadriel3CSS: a JavaScript object-based approach to create utility-first styles.",
   "author": "Patrick Gunnar",
   "main": "index.js",
   "types": "index.d.ts",
@@ -48,5 +48,21 @@
     "universal": "napi universal",
     "version": "napi version"
   },
-  "packageManager": "yarn@4.0.2"
+  "packageManager": "yarn@4.0.2",
+  "optionalDependencies": {
+    "galadriel3css-win32-x64-msvc": "0.1.0",
+    "galadriel3css-darwin-x64": "0.1.0",
+    "galadriel3css-linux-x64-gnu": "0.1.0",
+    "galadriel3css-darwin-arm64": "0.1.0",
+    "galadriel3css-android-arm64": "0.1.0",
+    "galadriel3css-linux-arm64-gnu": "0.1.0",
+    "galadriel3css-linux-arm64-musl": "0.1.0",
+    "galadriel3css-win32-arm64-msvc": "0.1.0",
+    "galadriel3css-linux-arm-gnueabihf": "0.1.0",
+    "galadriel3css-linux-x64-musl": "0.1.0",
+    "galadriel3css-win32-ia32-msvc": "0.1.0",
+    "galadriel3css-android-arm-eabi": "0.1.0",
+    "galadriel3css-darwin-universal": "0.1.0",
+    "galadriel3css-linux-riscv64-gnu": "0.1.0"
+  }
 }
