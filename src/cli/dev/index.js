@@ -1,4 +1,5 @@
 const chokidar = require("chokidar");
+const { processPath } = require("../../../index");
 
 function watcherInit() {
     const watcher = chokidar.watch(
@@ -10,8 +11,8 @@ function watcherInit() {
         }
     );
 
-    watcher.on("all", (event, path) => {
-        console.log(event, path);
+    watcher.on("all", (_, path) => {
+        processPath(path);
     });
 }
 

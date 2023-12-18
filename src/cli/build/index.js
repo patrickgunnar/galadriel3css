@@ -1,4 +1,5 @@
 const { glob } = require("glob");
+const { processPath } = require("../../../index");
 
 async function builderInit() {
     const files = await glob("**/*.{js,jsx,ts,tsx}", {
@@ -7,7 +8,7 @@ async function builderInit() {
     });
 
     files.forEach((file) => {
-        console.log(file);
+        processPath(file);
     });
 }
 

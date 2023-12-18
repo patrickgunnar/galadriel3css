@@ -18,6 +18,7 @@ yargs
         handler: async (_) => {
             console.clear();
             await builderInit();
+            console.clear();
             watcherInit();
         },
     })

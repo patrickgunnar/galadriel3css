@@ -281,6 +281,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { dummySum } = nativeBinding
+const { dummySum, processPath } = nativeBinding
 
 module.exports.dummySum = dummySum
+module.exports.processPath = processPath

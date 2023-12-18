@@ -7,7 +7,7 @@ const galadrielJSON = `{
 
 function galadrielInit() {
     fs.writeFileSync(path.join(process.cwd(), "galadriel.json"), galadrielJSON);
-    console.info("'galadriel.json' created successfully!");
+    console.info("'galadriel.json' created successfully!\n");
 }
 
 module.exports.galadrielInit = galadrielInit;
