@@ -50,19 +50,24 @@
   },
   "packageManager": "yarn@4.0.2",
   "optionalDependencies": {
-    "galadriel3css-win32-x64-msvc": "0.1.1",
-    "galadriel3css-darwin-x64": "0.1.1",
-    "galadriel3css-linux-x64-gnu": "0.1.1",
-    "galadriel3css-darwin-arm64": "0.1.1",
+    "galadriel3css-android-arm-eabi": "0.1.1",
     "galadriel3css-android-arm64": "0.1.1",
+    "galadriel3css-darwin-arm64": "0.1.1",
+    "galadriel3css-darwin-universal": "0.1.1",
+    "galadriel3css-darwin-x64": "0.1.1",
+    "galadriel3css-linux-arm-gnueabihf": "0.1.1",
     "galadriel3css-linux-arm64-gnu": "0.1.1",
     "galadriel3css-linux-arm64-musl": "0.1.1",
-    "galadriel3css-win32-arm64-msvc": "0.1.1",
-    "galadriel3css-linux-arm-gnueabihf": "0.1.1",
+    "galadriel3css-linux-riscv64-gnu": "0.1.1",
+    "galadriel3css-linux-x64-gnu": "0.1.1",
     "galadriel3css-linux-x64-musl": "0.1.1",
+    "galadriel3css-win32-arm64-msvc": "0.1.1",
     "galadriel3css-win32-ia32-msvc": "0.1.1",
-    "galadriel3css-android-arm-eabi": "0.1.1",
-    "galadriel3css-darwin-universal": "0.1.1",
-    "galadriel3css-linux-riscv64-gnu": "0.1.1"
+    "galadriel3css-win32-x64-msvc": "0.1.1"
+  },
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "glob": "^10.3.10",
+    "yargs": "^17.7.2"
   }
 }
