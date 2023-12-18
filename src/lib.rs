@@ -13,3 +13,12 @@ use rustal::dummy_test::*;
 pub fn dummy_sum(a: i32, b: i32) -> String {
   dummy_test(a + b)
 }
+
+use napi::Result;
+
+#[napi]
+pub fn process_path(path: String) -> Result<()> {
+  println!("Processing current path: {}", path);
+
+  Ok(())
+}
