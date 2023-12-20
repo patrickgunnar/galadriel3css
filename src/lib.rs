@@ -6,7 +6,6 @@ extern crate napi_derive;
 pub mod rustal {
   pub mod blueprint;
   pub mod configatron;
-  pub mod dummy_test;
   pub mod file_reader;
   pub mod nucleus;
 }
