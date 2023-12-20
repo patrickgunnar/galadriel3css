@@ -6,9 +6,9 @@ extern crate napi_derive;
 pub mod rustal {
   pub mod blueprint;
   pub mod configatron;
-  pub mod dummy_test;
   pub mod file_reader;
   pub mod nucleus;
+  pub mod dummy_test;
 }
 
 use napi::Result;
@@ -28,12 +28,4 @@ pub fn process_path(_path: String) -> Result<()> {
   println!("{:?}", data);
 
   Ok(())
-}
-
-// -------------------------------------------------------
-use rustal::dummy_test::*;
-
-#[napi]
-pub fn dummy_sum(a: i32, b: i32) -> String {
-  dummy_test(a + b)
 }

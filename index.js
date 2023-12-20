@@ -281,10 +281,10 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { Blueprint, Configatron, configatronInitializer, processPath, dummySum } = nativeBinding
+const { Blueprint, Configatron, dummyTest, configatronInitializer, processPath } = nativeBinding
 
 module.exports.Blueprint = Blueprint
 module.exports.Configatron = Configatron
+module.exports.dummyTest = dummyTest
 module.exports.configatronInitializer = configatronInitializer
 module.exports.processPath = processPath
-module.exports.dummySum = dummySum
