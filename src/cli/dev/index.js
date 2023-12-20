@@ -1,9 +1,16 @@
 const chokidar = require("chokidar");
-const { processPath } = require("../../../index");
+const { processPath, Blueprint, Configatron } = require("../../../index");
 
 function watcherInit() {
+    const blueprint = new Blueprint();
+    const configatron = new Configatron();
+
+    const { ignore, include } = JSON.parse(configatron.collectFromJs(["ignore", "include"]));
+    console.log("ignore: ", ignore);
+    console.log("include: ", include);
+
     const watcher = chokidar.watch(
-        ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
+        ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx", "galadriel.json"],
         {
             cwd: process.cwd(),
             ignoreInitial: true,
@@ -11,8 +18,16 @@ function watcherInit() {
         }
     );
 
+    blueprint.title("Galadriel3CSS Development Environment");
+    blueprint.info("the development environment started successfully");
+
     watcher.on("all", (_, path) => {
-        processPath(path);
+        if (path.includes("galadriel.json")) {
+            blueprint.warn("modification in 'galadriel.json' detected, restart the observer to apply changes.");
+            watcher.close();
+        } else {
+            processPath(path);
+        }
     });
 }
 
