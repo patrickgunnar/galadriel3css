@@ -5,4 +5,13 @@
 
 export function processPath(path: string): void
 export function dummySum(a: number, b: number): string
-export class Blueprint { }
+export class Blueprint {
+  constructor()
+  useCurrentTime(): string
+  title(msg: string): void
+  log(msg: string): void
+  error(msg: string): void
+  warn(msg: string): void
+  info(msg: string): void
+  bold(msg: string): string
+}

@@ -1,5 +1,6 @@
 use chrono::{Local, Timelike};
 
+#[napi(js_name = "Blueprint")]
 pub struct Blueprint {
   bold_log_color: String,
   bold_error_color: String,
@@ -15,7 +16,9 @@ pub struct Blueprint {
   closing_style: String,
 }
 
+#[napi]
 impl Blueprint {
+  #[napi(constructor)]
   pub fn new() -> Self {
     Blueprint {
       bold_log_color: String::from("\x1b[1;38;5;10m"),
@@ -33,7 +36,8 @@ impl Blueprint {
     }
   }
 
-  fn use_current_time(&self) -> String {
+  #[napi]
+  pub fn use_current_time(&self) -> String {
     let time = Local::now();
 
     let hour = time.hour();
@@ -46,12 +50,14 @@ impl Blueprint {
     )
   }
 
-  pub fn title(&self, msg: &str) {
+  #[napi]
+  pub fn title(&self, msg: String) {
     println!("{}{}{}", self.bold_title_color, msg, self.closing_style);
     print!("\n");
   }
 
-  pub fn log(&self, msg: &str) {
+  #[napi]
+  pub fn log(&self, msg: String) {
     println!(
       " {}•{} {} {}log____{} {}",
       self.bold_log_color,
@@ -63,7 +69,8 @@ impl Blueprint {
     );
   }
 
-  pub fn error(&self, msg: &str) {
+  #[napi]
+  pub fn error(&self, msg: String) {
     println!(
       " {}•{} {} {}error__{} {}",
       self.bold_error_color,
@@ -75,7 +82,8 @@ impl Blueprint {
     );
   }
 
-  pub fn warn(&self, msg: &str) {
+  #[napi]
+  pub fn warn(&self, msg: String) {
     println!(
       " {}•{} {} {}warn___{} {}",
       self.bold_warning_color,
@@ -87,7 +95,8 @@ impl Blueprint {
     );
   }
 
-  pub fn info(&self, msg: &str) {
+  #[napi]
+  pub fn info(&self, msg: String) {
     println!(
       " {}•{} {} {}info___{} {}",
       self.bold_info_color,
@@ -99,7 +108,8 @@ impl Blueprint {
     );
   }
 
-  pub fn bold(&self, msg: &str) -> String {
+  #[napi]
+  pub fn bold(&self, msg: String) -> String {
     format!("{}{}{}", self.bold, msg, self.closing_style)
   }
 }
