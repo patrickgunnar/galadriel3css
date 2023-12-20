@@ -23,7 +23,8 @@ function watcherInit() {
 
     watcher.on("all", (_, path) => {
         if (path.includes("galadriel.json")) {
-            blueprint.warn("modification in 'galadriel.json' detected, restart the observer to apply changes.");
+            blueprint.warn("modification in 'galadriel.json' detected");
+            blueprint.info("restart the development environment to apply changes");
             watcher.close();
         } else {
             processPath(path);
