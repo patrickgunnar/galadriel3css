@@ -5,13 +5,15 @@ extern crate napi_derive;
 
 pub mod rustal {
   pub mod blueprint;
+  pub mod codelyzer;
   pub mod configatron;
   pub mod file_reader;
   pub mod nucleus;
 }
 
-use rustal::configatron::{configatron_init, Configatron};
 use rustal::nucleus::NUCLEUS_CONFIG;
+use rustal::configatron::{configatron_init, Configatron};
+use rustal::codelyzer::Codelyzer;
 
 #[napi]
 pub fn configatron_initializer() {
@@ -21,7 +23,10 @@ pub fn configatron_initializer() {
 #[napi]
 pub fn process_path(_path: String) {
   let configatron = Configatron::new();
-  let data = configatron.collect_from_rust(vec!["global", "module", "ajx"]);
+  let _data = configatron.collect_from_rust(vec!["global", "module", "ajx"]);
+  
+  let codelyzer = Codelyzer::new(_path.as_str());
+  let dt = codelyzer.parser_code();
 
-  println!("{:?}", data);
+  println!("{:#?}", dt);
 }
