@@ -88,6 +88,8 @@ impl Codelyzer {
     while let Ok((rest, _)) = Self::process_tokens(input.as_str()) {
       if rest.starts_with("createStyles") {
         println!("{:#?}", rest);
+
+        input = rest.to_string();
       } else {
         input = rest.to_string();
       }
