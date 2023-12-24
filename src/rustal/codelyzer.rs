@@ -1,6 +1,7 @@
 use crate::rustal::blueprint::Blueprint;
 use crate::rustal::file_reader::file_reader;
 
+use std::collections::HashMap;
 use nom::{
   branch::alt,
   bytes::complete::{tag, take_until, take_while1},
@@ -14,7 +15,6 @@ type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
 pub struct Codelyzer {
   code: String,
-  pub create_styles_map: std::collections::HashMap<String, String>,
 }
 
 impl Codelyzer {
@@ -23,13 +23,13 @@ impl Codelyzer {
     let file_content = file_reader(path);
 
     match file_content {
-      Ok(content) => Codelyzer { code: content, create_styles_map: std::collections::HashMap::new() },
+      Ok(content) => Codelyzer { code: content },
       Err(_) => {
         blueprint.error("something went wrong whiling processing a file".to_string());
         blueprint.info(format!("path not processed: {}", path).to_string());
 
         Codelyzer {
-          code: "".to_string(), create_styles_map: std::collections::HashMap::new()
+          code: "".to_string()
         }
       }
     }
@@ -106,15 +106,6 @@ impl Codelyzer {
     delimited(tag("//"), take_until("\n"), tag("\n"))(input)
   }
 
-  fn save_collected_objects(main_obj: std::collections::HashMap<&str, String>, children_obj: std::collections::HashMap<&str, String>) {
-    let mut final_map: std::collections::HashMap<&str, std::collections::HashMap<&str, String>> = std::collections::HashMap::new();
-
-    final_map.insert("main", main_obj);
-    final_map.insert("targetChildren", children_obj);
-
-    println!("{:#?}", final_map);
-  }
-
   fn process_create_styles(input: &str) -> ParserResult<&str> {
     alt((
       alt((
@@ -136,7 +127,7 @@ impl Codelyzer {
     ))(input)
   }
 
-  fn parser_create_styles(input: &str) -> ParserResult<&str> {
+  fn parser_create_styles(input: &str) -> IResult<&str, (HashMap<String, String>, HashMap<String, String>)> {
     let mut code = input;
 
     let mut is_key_env = false;
@@ -150,9 +141,9 @@ impl Codelyzer {
     let mut key = "";
     let mut nested_key = "";
 
-    let mut map: std::collections::HashMap<&str, String> = std::collections::HashMap::new();
-    let mut nested_map: std::collections::HashMap<&str, String> = std::collections::HashMap::new();
-    let mut children_map: std::collections::HashMap<&str, String> = std::collections::HashMap::new();
+    let mut map: HashMap<String, String> = HashMap::new();
+    let mut nested_map: HashMap<String, String> = HashMap::new();
+    let mut children_map: HashMap<String, String> = HashMap::new();
 
     while let Ok((rest, result)) = Self::process_create_styles(code) {
       if rest.starts_with("(") {
@@ -185,9 +176,9 @@ impl Codelyzer {
         is_nested_key_env = true;
       } else if rest.starts_with("}") && is_key_env {
         if is_target_children_env {
-          children_map.insert(key, format!("{:?}", nested_map).to_string());
+          children_map.insert(key.to_string(), format!("{:?}", nested_map).to_string());
         } else {
-          map.insert(key, format!("{:?}", nested_map).to_string());
+          map.insert(key.to_string(), format!("{:?}", nested_map).to_string());
         }
 
         is_key_env = false;
@@ -196,9 +187,9 @@ impl Codelyzer {
         nested_map.clear();
       } else if is_key_env && result != ":" && !result.trim().is_empty() && !is_nested_key_env {
         if is_target_children_env {
-          children_map.insert(key, result.to_string());
+          children_map.insert(key.to_string(), result.to_string());
         } else {
-          map.insert(key, result.to_string());
+          map.insert(key.to_string(), result.to_string());
         }
 
         is_key_env = false;
@@ -206,16 +197,14 @@ impl Codelyzer {
         nested_key = result;
         processing_current_nested = true;
       } else if is_nested_key_env && result != ":" && !result.trim().is_empty() && is_key_env && processing_current_nested {
-        nested_map.insert(nested_key, result.to_string());
+        nested_map.insert(nested_key.to_string(), result.to_string());
         processing_current_nested = false;
       }
 
       code = rest;
     }
 
-    Self::save_collected_objects(map, children_map);
-
-    Ok((code, ""))
+    Ok((code, (map, children_map)))
   }
 
   fn clear_special(input: &str) -> ParserResult<&str> {
@@ -248,12 +237,20 @@ impl Codelyzer {
     ))(input)
   }
 
-  pub fn parser_code(&mut self) -> ParserResult<&str> {
+  pub fn parser_code(&mut self) -> IResult<&str, HashMap<String, HashMap<String, HashMap<String, String>>>> {
     let mut input = self.code.as_str();
+    let mut create_styles_map: HashMap<String, HashMap<String, HashMap<String, String>>> = HashMap::new();
 
     while let Ok((rest, _)) = Self::process_tokens(input) {
       if rest.starts_with("createStyles") {
-        if let Ok((r, _)) = Self::parser_create_styles(rest) {
+        if let Ok((r, (main, children))) = Self::parser_create_styles(rest) {
+          let mut map: HashMap<String, HashMap<String, String>> = HashMap::new();
+          let ke_name = format!("createStyles_{}", create_styles_map.len());
+
+          map.insert("main".to_string(), main);
+          map.insert("children".to_string(), children);
+          create_styles_map.insert(ke_name, map);
+
           input = r;
         } else {
           input = rest;
@@ -263,6 +260,6 @@ impl Codelyzer {
       }
     }
 
-    Ok(("", ""))
+    Ok(("", create_styles_map))
   }
 }
