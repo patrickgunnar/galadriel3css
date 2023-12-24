@@ -143,6 +143,10 @@ impl Codelyzer {
     ))(input)
   }
 
+  fn removes_comment(input: &str) -> ParserResult<&str> {
+    delimited(tag("//"), take_until("\n"), tag("\n"))(input)
+  }
+
   fn process_create_styles(input: &str) -> ParserResult<&str> {
     alt((
       alt((
@@ -154,6 +158,7 @@ impl Codelyzer {
         Self::clear_colon,
         Self::clear_comma,
         Self::clear_curly_braces,
+        Self::removes_comment,
       )),
       alt((Self::identifier_alpha_num, Self::identifier_string)),
     ))(input)
@@ -164,6 +169,7 @@ impl Codelyzer {
 
     let mut is_key_env = false;
     let mut is_nested_key_env = false;
+    let mut processing_current_nested = false;
 
     let mut key = "";
     let mut nested_key = "";
@@ -184,14 +190,17 @@ impl Codelyzer {
         map.insert(key, format!("{:?}", nested_map).to_string());
         is_key_env = false;
         is_nested_key_env = false;
+        processing_current_nested = false;
         nested_map.clear();
-      } else if is_key_env && result != ":" && result.len() > 1 && !is_nested_key_env {
+      } else if is_key_env && result != ":" && !result.trim().is_empty() && !is_nested_key_env {
         map.insert(key, result.to_string());
         is_key_env = false;
-      } else if rest.starts_with(":") && is_key_env {
+      } else if rest.starts_with(":") && is_key_env && !processing_current_nested {
         nested_key = result;
-      } else if is_nested_key_env && result != ":" && result.len() > 1 && is_key_env {
+        processing_current_nested = true;
+      } else if is_nested_key_env && result != ":" && !result.trim().is_empty() && is_key_env && processing_current_nested {
         nested_map.insert(nested_key, result.to_string());
+        processing_current_nested = false;
       }
 
       if rest.starts_with("targetChildren") {
