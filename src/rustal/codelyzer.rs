@@ -3,7 +3,7 @@ use crate::rustal::file_reader::file_reader;
 
 use nom::{
   branch::alt,
-  bytes::complete::{tag, take_while1},
+  bytes::complete::{tag, take_until, take_while1},
   character::complete::char,
   error::VerboseError,
   sequence::delimited,
@@ -116,43 +116,26 @@ impl Codelyzer {
     alt((tag(","),))(input)
   }
 
-  fn identifier_alpha_num_with_special_char(input: &str) -> ParserResult<&str> {
-    take_while1(|c: char| {
-      c.is_alphanumeric()
-        || c == ' '
-        || c == '!'
-        || c == '%'
-        || c == '-'
-        || c == '+'
-        || c == '*'
-        || c == '/'
-        || c == '('
-        || c == ')'
-    })(input)
+  fn identifier_double_quotes(input: &str) -> ParserResult<&str> {
+    take_until("\"")(input)
+  }
+
+  fn identifier_single_quotes(input: &str) -> ParserResult<&str> {
+    alt((take_until("\'"), take_until("'")))(input)
+  }
+
+  fn identifier_backtick(input: &str) -> ParserResult<&str> {
+    take_until("`")(input)
   }
 
   fn identifier_string(input: &str) -> ParserResult<&str> {
     alt((
-      delimited(
-        char('"'),
-        Self::identifier_alpha_num_with_special_char,
-        char('"'),
-      ),
-      delimited(
-        tag("\""),
-        Self::identifier_alpha_num_with_special_char,
-        tag("\""),
-      ),
-      delimited(
-        char('\''),
-        Self::identifier_alpha_num_with_special_char,
-        char('\''),
-      ),
-      delimited(
-        tag("'"),
-        Self::identifier_alpha_num_with_special_char,
-        tag("'"),
-      ),
+      delimited(char('"'), Self::identifier_double_quotes, char('"')),
+      delimited(tag("\""), Self::identifier_double_quotes, tag("\"")),
+      delimited(char('\''), Self::identifier_single_quotes, char('\'')),
+      delimited(tag("'"), Self::identifier_single_quotes, tag("'")),
+      delimited(char('`'), Self::identifier_backtick, char('`')),
+      delimited(tag("`"), Self::identifier_backtick, tag("`")),
     ))(input)
   }
 
@@ -192,7 +175,7 @@ impl Codelyzer {
         is_key_env = false;
       }
 
-      if rest.starts_with("`${") {
+      if rest.starts_with("hover: {") {
         code = "";
       } else {
         code = rest;
