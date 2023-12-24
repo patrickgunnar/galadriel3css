@@ -25,7 +25,7 @@ pub fn process_path(_path: String) {
   let configatron = Configatron::new();
   let _data = configatron.collect_from_rust(vec!["global", "module", "ajx"]);
   
-  let codelyzer = Codelyzer::new(_path.as_str());
+  let mut codelyzer = Codelyzer::new(_path.as_str());
   let _dt = codelyzer.parser_code();
 
   //println!("{:#?}", dt);
