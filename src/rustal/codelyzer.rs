@@ -116,6 +116,10 @@ impl Codelyzer {
     alt((tag(","),))(input)
   }
 
+  /*fn clear_backtick(input: &str) -> ParserResult<&str> {
+    alt((tag("`"),))(input)
+  }*/
+
   fn identifier_double_quotes(input: &str) -> ParserResult<&str> {
     take_until("\"")(input)
   }
@@ -146,10 +150,10 @@ impl Codelyzer {
         Self::clear_space,
         Self::clear_parenthesis,
         Self::clear_arrow,
-        Self::clear_curly_braces,
         Self::escape_char,
         Self::clear_colon,
         Self::clear_comma,
+        Self::clear_curly_braces,
       )),
       alt((Self::identifier_alpha_num, Self::identifier_string)),
     ))(input)
@@ -159,23 +163,38 @@ impl Codelyzer {
     let mut code = input;
 
     let mut is_key_env = false;
-    let mut key = "";
+    let mut is_nested_key_env = false;
 
-    let mut map: std::collections::HashMap<&str, &str> = std::collections::HashMap::new();
+    let mut key = "";
+    let mut nested_key = "";
+
+    let mut map = std::collections::HashMap::new();
+    let mut nested_map = std::collections::HashMap::new();
 
     while let Ok((rest, result)) = Self::process_create_styles(code) {
       //println!("Rest -> {:#?}", rest);
       //println!("Result -> {:#?}", result);
 
-      if rest.starts_with(":") {
+      if rest.starts_with(":") && !is_key_env {
         is_key_env = true;
         key = result;
-      } else if is_key_env && result != ":" && result.len() > 1 {
-        map.insert(key, result);
+      } else if rest.starts_with("{") && is_key_env {
+        is_nested_key_env = true;
+      } else if rest.starts_with("}") && is_key_env {
+        map.insert(key, format!("{:?}", nested_map).to_string());
         is_key_env = false;
+        is_nested_key_env = false;
+        nested_map.clear();
+      } else if is_key_env && result != ":" && result.len() > 1 && !is_nested_key_env {
+        map.insert(key, result.to_string());
+        is_key_env = false;
+      } else if rest.starts_with(":") && is_key_env {
+        nested_key = result;
+      } else if is_nested_key_env && result != ":" && result.len() > 1 && is_key_env {
+        nested_map.insert(nested_key, result.to_string());
       }
 
-      if rest.starts_with("hover: {") {
+      if rest.starts_with("targetChildren") {
         code = "";
       } else {
         code = rest;
