@@ -196,6 +196,7 @@ Cargo.lock
 
 *.node
 
-./local.js
 local.js
 galadriel.json
+galadriel-backup.json
+local-backup.js
