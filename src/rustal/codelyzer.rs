@@ -1,7 +1,14 @@
 use crate::rustal::blueprint::Blueprint;
 use crate::rustal::file_reader::file_reader;
 
-use nom::{branch::alt, bytes::complete::tag, error::VerboseError, IResult};
+use nom::{
+  branch::alt,
+  bytes::complete::{tag, take_while1},
+  character::complete::char,
+  error::VerboseError,
+  sequence::delimited,
+  IResult,
+};
 
 type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
@@ -25,10 +32,6 @@ impl Codelyzer {
         }
       }
     }
-  }
-
-  fn escape_space(input: &str) -> ParserResult<&str> {
-    alt((tag(" "),))(input)
   }
 
   fn simple_char(input: &str) -> ParserResult<&str> {
@@ -73,25 +76,146 @@ impl Codelyzer {
   }
 
   fn process_tokens(input: &str) -> ParserResult<&str> {
-    alt((Self::escape_space, Self::special_char, Self::simple_char))(input)
+    alt((
+      Self::clear_space,
+      Self::escape_char,
+      Self::special_char,
+      Self::simple_char,
+    ))(input)
+  }
+
+  fn escape_char(input: &str) -> ParserResult<&str> {
+    alt((tag("\n"), tag("\t")))(input)
+  }
+
+  fn clear_space(input: &str) -> ParserResult<&str> {
+    alt((tag(" "),))(input)
+  }
+
+  fn clear_parenthesis(input: &str) -> ParserResult<&str> {
+    alt((tag("("), tag(")")))(input)
+  }
+
+  fn clear_arrow(input: &str) -> ParserResult<&str> {
+    alt((tag("=>"),))(input)
+  }
+
+  fn clear_curly_braces(input: &str) -> ParserResult<&str> {
+    alt((tag("{"), tag("}")))(input)
+  }
+
+  fn identifier_alpha_num(input: &str) -> ParserResult<&str> {
+    take_while1(|c: char| c.is_alphanumeric() || c == '_')(input)
+  }
+
+  fn clear_colon(input: &str) -> ParserResult<&str> {
+    alt((tag(":"),))(input)
+  }
+
+  fn clear_comma(input: &str) -> ParserResult<&str> {
+    alt((tag(","),))(input)
+  }
+
+  fn identifier_alpha_num_with_special_char(input: &str) -> ParserResult<&str> {
+    take_while1(|c: char| {
+      c.is_alphanumeric()
+        || c == ' '
+        || c == '!'
+        || c == '%'
+        || c == '-'
+        || c == '+'
+        || c == '*'
+        || c == '/'
+        || c == '('
+        || c == ')'
+    })(input)
+  }
+
+  fn identifier_string(input: &str) -> ParserResult<&str> {
+    alt((
+      delimited(
+        char('"'),
+        Self::identifier_alpha_num_with_special_char,
+        char('"'),
+      ),
+      delimited(
+        tag("\""),
+        Self::identifier_alpha_num_with_special_char,
+        tag("\""),
+      ),
+      delimited(
+        char('\''),
+        Self::identifier_alpha_num_with_special_char,
+        char('\''),
+      ),
+      delimited(
+        tag("'"),
+        Self::identifier_alpha_num_with_special_char,
+        tag("'"),
+      ),
+    ))(input)
+  }
+
+  fn process_create_styles(input: &str) -> ParserResult<&str> {
+    alt((
+      alt((
+        tag("createStyles"),
+        Self::clear_space,
+        Self::clear_parenthesis,
+        Self::clear_arrow,
+        Self::clear_curly_braces,
+        Self::escape_char,
+        Self::clear_colon,
+        Self::clear_comma,
+      )),
+      alt((Self::identifier_alpha_num, Self::identifier_string)),
+    ))(input)
+  }
+
+  fn parser_create_styles(input: &str) -> ParserResult<&str> {
+    let mut code = input;
+
+    let mut is_key_env = false;
+    let mut key = "";
+
+    let mut map: std::collections::HashMap<&str, &str> = std::collections::HashMap::new();
+
+    while let Ok((rest, result)) = Self::process_create_styles(code) {
+      //println!("Rest -> {:#?}", rest);
+      //println!("Result -> {:#?}", result);
+
+      if rest.starts_with(":") {
+        is_key_env = true;
+        key = result;
+      } else if is_key_env && result != ":" && result.len() > 1 {
+        map.insert(key, result);
+        is_key_env = false;
+      }
+
+      if rest.starts_with("`${") {
+        code = "";
+      } else {
+        code = rest;
+      }
+    }
+
+    println!("Properties -> \n{:#?}", map);
+
+    Ok((code, ""))
   }
 
   pub fn parser_code(&self) -> ParserResult<&str> {
-    let mut input = self
-      .code
-      .replace("\n", "")
-      .replace("\t", "")
-      .replace("\r", "")
-      .replace("\x0C", "")
-      .replace("\x08", "");
+    let mut input = self.code.as_str();
 
-    while let Ok((rest, _)) = Self::process_tokens(input.as_str()) {
+    while let Ok((rest, _)) = Self::process_tokens(input) {
       if rest.starts_with("createStyles") {
-        println!("{:#?}", rest);
-
-        input = rest.to_string();
+        if let Ok((r, _)) = Self::parser_create_styles(rest) {
+          input = r;
+        } else {
+          input = rest;
+        }
       } else {
-        input = rest.to_string();
+        input = rest;
       }
     }
 
