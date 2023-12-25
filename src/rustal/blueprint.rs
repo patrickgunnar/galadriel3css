@@ -16,9 +16,12 @@ pub struct Blueprint {
   closing_style: String,
 }
 
+/*
+  - Blueprint is responsible for printing the Galadriel3CSS statements to the console
+*/
 #[napi]
 impl Blueprint {
-  #[napi(constructor)]
+  #[napi(constructor)] // initializes the class' properties
   pub fn new() -> Self {
     Blueprint {
       bold_log_color: String::from("\x1b[1;38;5;10m"),
@@ -36,27 +39,30 @@ impl Blueprint {
     }
   }
 
-  #[napi]
+  #[napi] // get current local time
   pub fn use_current_time(&self) -> String {
+    // initializes the Local library
     let time = Local::now();
 
+    // gets the hour, minutes and seconds
     let hour = time.hour();
     let minute = time.minute();
     let second = time.second();
 
+    // returns the formatted local time
     format!(
       "{}[{:02}:{:02}:{:02}]{}",
       self.bold_time_color, hour, minute, second, self.closing_style
     )
   }
 
-  #[napi]
+  #[napi] // prints the received message as a title formatting
   pub fn title(&self, msg: String) {
     println!("{}{}{}", self.bold_title_color, msg, self.closing_style);
     print!("\n");
   }
 
-  #[napi]
+  #[napi] // prints the received message as a log formatting
   pub fn log(&self, msg: String) {
     println!(
       " {}•{} {} {}log____{} {}",
@@ -69,7 +75,7 @@ impl Blueprint {
     );
   }
 
-  #[napi]
+  #[napi] // prints the received message as an error formatting
   pub fn error(&self, msg: String) {
     println!(
       " {}•{} {} {}error__{} {}",
@@ -82,7 +88,7 @@ impl Blueprint {
     );
   }
 
-  #[napi]
+  #[napi] // prints the received message as warning formatting
   pub fn warn(&self, msg: String) {
     println!(
       " {}•{} {} {}warn___{} {}",
@@ -95,7 +101,7 @@ impl Blueprint {
     );
   }
 
-  #[napi]
+  #[napi] // prints the received message as an info formatting
   pub fn info(&self, msg: String) {
     println!(
       " {}•{} {} {}info___{} {}",
@@ -108,7 +114,7 @@ impl Blueprint {
     );
   }
 
-  #[napi]
+  #[napi] // formats the received message as bold
   pub fn bold(&self, msg: String) -> String {
     format!("{}{}{}", self.bold, msg, self.closing_style)
   }

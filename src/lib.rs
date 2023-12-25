@@ -23,7 +23,7 @@ pub fn configatron_initializer() {
 #[napi]
 pub fn process_path(_path: String) {
   let configatron = Configatron::new();
-  let _data = configatron.collect_from_rust(vec!["global", "module", "ajx"]);
+  let _data = configatron.collects_from_rust(vec!["global", "module", "ajx"]);
   let mut codelyzer = Codelyzer::new(_path.as_str());
 
   if let Ok((_, map)) = codelyzer.parser_code() {

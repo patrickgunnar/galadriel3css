@@ -7,7 +7,7 @@ async function builderInit() {
     const blueprint = new Blueprint();
     const configatron = new Configatron();
 
-    const { ignore, include } = JSON.parse(configatron.collectFromJs(["ignore", "include"]));
+    const { ignore, include } = JSON.parse(configatron.collectsFromJs(["ignore", "include"]));
     console.log("ignore: ", ignore);
     console.log("include: ", include);
     

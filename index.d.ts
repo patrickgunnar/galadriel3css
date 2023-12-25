@@ -17,5 +17,5 @@ export class Blueprint {
 }
 export class Configatron {
   constructor()
-  collectFromJs(keys: Array<string>): string
+  collectsFromJs(keys: Array<string>): string
 }
