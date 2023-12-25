@@ -178,27 +178,37 @@ impl Codelyzer {
         if is_target_children_env {
           children_map.insert(key.to_string(), format!("{:?}", nested_map).to_string());
         } else {
+          if result != ":" && !nested_key.trim().is_empty() && !result.trim().is_empty() {
+            nested_map.insert(nested_key.to_string(), result.to_string());
+          }
+
           map.insert(key.to_string(), format!("{:?}", nested_map).to_string());
         }
 
         is_key_env = false;
         is_nested_key_env = false;
         processing_current_nested = false;
+        nested_key = "";
+        key = "";
         nested_map.clear();
-      } else if is_key_env && result != ":" && !result.trim().is_empty() && !is_nested_key_env {
+      } else if is_key_env && result != ":" && !key.trim().is_empty() && !result.trim().is_empty() && !is_nested_key_env {
         if is_target_children_env {
-          children_map.insert(key.to_string(), result.to_string());
+          if !result.contains("function") && !key.contains("targetChildren") {
+            children_map.insert(key.to_string(), result.to_string());
+          }
         } else {
           map.insert(key.to_string(), result.to_string());
         }
 
         is_key_env = false;
+        key = "";
       } else if rest.starts_with(":") && is_key_env && !processing_current_nested {
         nested_key = result;
         processing_current_nested = true;
-      } else if is_nested_key_env && result != ":" && !result.trim().is_empty() && is_key_env && processing_current_nested {
+      } else if is_nested_key_env && result != ":" && !nested_key.trim().is_empty() && !result.trim().is_empty() && is_key_env && processing_current_nested {
         nested_map.insert(nested_key.to_string(), result.to_string());
         processing_current_nested = false;
+        nested_key = "";
       }
 
       code = rest;
