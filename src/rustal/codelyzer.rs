@@ -169,19 +169,21 @@ impl Codelyzer {
         }
       }
 
-      if rest.starts_with(":") && !is_key_env {
+      if rest.trim().starts_with(":") && !is_key_env {
         is_key_env = true;
         key = result;
       } else if rest.starts_with("{") && is_key_env {
         is_nested_key_env = true;
       } else if rest.starts_with("}") && is_key_env {
-        if is_target_children_env {
+        if !nested_key.trim().is_empty() && result != ":" && result != "," && !result.trim().is_empty() && is_nested_key_env {
+          nested_map.insert(nested_key.to_string(), result.to_string());
+        } else if !key.trim().is_empty() && result != ":" && result != "," && !result.trim().is_empty() && !is_nested_key_env {
+          map.insert(key.to_string(), result.to_string());
+        }
+          
+        if is_nested_key_env && is_target_children_env {
           children_map.insert(key.to_string(), format!("{:?}", nested_map).to_string());
-        } else {
-          if result != ":" && !nested_key.trim().is_empty() && !result.trim().is_empty() {
-            nested_map.insert(nested_key.to_string(), result.to_string());
-          }
-
+        } else if is_nested_key_env {
           map.insert(key.to_string(), format!("{:?}", nested_map).to_string());
         }
 
@@ -191,7 +193,7 @@ impl Codelyzer {
         nested_key = "";
         key = "";
         nested_map.clear();
-      } else if is_key_env && result != ":" && !key.trim().is_empty() && !result.trim().is_empty() && !is_nested_key_env {
+      } else if is_key_env && result != ":" && result != "," && !key.trim().is_empty() && !result.trim().is_empty() && !is_nested_key_env {
         if is_target_children_env {
           if !result.contains("function") && !key.contains("targetChildren") {
             children_map.insert(key.to_string(), result.to_string());
@@ -202,13 +204,23 @@ impl Codelyzer {
 
         is_key_env = false;
         key = "";
-      } else if rest.starts_with(":") && is_key_env && !processing_current_nested {
+      } else if rest.trim().starts_with(":") && is_key_env && is_nested_key_env && !processing_current_nested {
         nested_key = result;
         processing_current_nested = true;
-      } else if is_nested_key_env && result != ":" && !nested_key.trim().is_empty() && !result.trim().is_empty() && is_key_env && processing_current_nested {
+      } else if is_nested_key_env && result != ":" && result != "," && !nested_key.trim().is_empty() && !result.trim().is_empty() && is_key_env && processing_current_nested {
         nested_map.insert(nested_key.to_string(), result.to_string());
         processing_current_nested = false;
         nested_key = "";
+      }
+
+      if rest.starts_with(",") {
+        if is_key_env && !is_nested_key_env {
+          key = "";
+          is_key_env = false;
+        } else {
+          nested_key = "";
+          processing_current_nested = false;
+        }
       }
 
       code = rest;
