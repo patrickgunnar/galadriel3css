@@ -3,17 +3,28 @@
 #[macro_use]
 extern crate napi_derive;
 
+pub mod core {
+  pub mod nucleus;
+  pub mod property_core;
+  pub mod screen_core;
+  pub mod selector_core;
+}
+
+use core::nucleus::NUCLEUS_CONFIG;
+
 pub mod rustal {
+  pub mod alchemist;
   pub mod blueprint;
   pub mod codelyzer;
   pub mod configatron;
   pub mod file_reader;
-  pub mod nucleus;
 }
 
-use rustal::nucleus::NUCLEUS_CONFIG;
-use rustal::configatron::{configatron_init, Configatron};
+use rustal::alchemist::Alchemist;
 use rustal::codelyzer::Codelyzer;
+use rustal::configatron::{configatron_init, Configatron};
+
+use serde_json::Value;
 
 #[napi]
 pub fn configatron_initializer() {
@@ -23,10 +34,17 @@ pub fn configatron_initializer() {
 #[napi]
 pub fn process_path(_path: String) {
   let configatron = Configatron::new();
-  let _data = configatron.collects_from_rust(vec!["global", "module", "ajx"]);
+  let config = configatron.collects_from_rust(vec!["modular"]);
   let mut codelyzer = Codelyzer::new(_path.as_str());
 
   if let Ok((_, map)) = codelyzer.parser_code() {
-    println!("{:#?}", map);
+    let modular = match config.get("modular") {
+      Some(Value::Bool(b)) => *b,
+      _ => false,
+    };
+
+    let alchemist = Alchemist::new(modular);
+
+    alchemist.process_objects(map);
   }
 }
