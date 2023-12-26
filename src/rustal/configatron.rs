@@ -1,6 +1,6 @@
 use crate::rustal::blueprint::Blueprint;
 use crate::rustal::file_reader::file_reader;
-use crate::rustal::nucleus::NUCLEUS_CONFIG;
+use crate::core::nucleus::NUCLEUS_CONFIG;
 
 #[napi(js_name = "Configatron")]
 pub struct Configatron {
