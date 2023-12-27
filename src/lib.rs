@@ -15,6 +15,7 @@ use core::nucleus::NUCLEUS_CONFIG;
 pub mod rustal {
   pub mod alchemist;
   pub mod blueprint;
+  pub mod classinator;
   pub mod codelyzer;
   pub mod configatron;
   pub mod file_reader;
@@ -32,10 +33,10 @@ pub fn configatron_initializer() {
 }
 
 #[napi]
-pub fn process_path(_path: String) {
+pub fn process_path(path: String) {
   let configatron = Configatron::new();
   let config = configatron.collects_from_rust(vec!["modular"]);
-  let mut codelyzer = Codelyzer::new(_path.as_str());
+  let mut codelyzer = Codelyzer::new(path.as_str());
 
   if let Ok((_, map)) = codelyzer.parser_code() {
     let modular = match config.get("modular") {
@@ -45,6 +46,6 @@ pub fn process_path(_path: String) {
 
     let alchemist = Alchemist::new(modular);
 
-    alchemist.process_objects(map);
+    alchemist.process_objects(path.as_str(), map);
   }
 }
