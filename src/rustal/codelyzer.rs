@@ -18,7 +18,7 @@ pub struct Codelyzer {
 }
 
 /*
-  - Codelyzer is responsible for reading the content from a passed path and 
+  - Codelyzer is responsible for reading the content from a passed path and
   - collects the objects from the the createStyles' callback handler
 */
 impl Codelyzer {
@@ -441,17 +441,33 @@ impl Codelyzer {
         // receives the rest of the processed string and the objects' map
         // and the targetChildren's objects
         if let Ok((r, (main, children))) = Self::parser_create_styles(rest) {
+          // re-declare the main map into a mutable one
+          let mut main: HashMap<String, String> = main;
           // instantiate the map to holds the received objects' map and targetChildren's objects
           let mut map: HashMap<String, HashMap<String, String>> = HashMap::new();
-          // create a key name for the current data using the length of the create styles map
-          let key_name = format!("createStyles_{}", create_styles_map.len());
+          // collects the identifier from main map
+          let identifier = match main.remove("identifier") {
+            Some(id) => id,
+            None => {
+              let blueprint = Blueprint::new();
 
-          // inserts the objects' map as the value of the "main" key in map
-          map.insert("main".to_string(), main);
-          // inserts the targetChildren objects' map as the value of the "children" key in map
-          map.insert("children".to_string(), children);
-          // inserts the current map into the create styles map
-          create_styles_map.insert(key_name, map);
+              blueprint.warn(blueprint.bold("the 'createStyles' function was not processed".to_string()));
+              blueprint.warn("missing the 'identifier' property in the callback of 'createStyles'".to_string());
+              blueprint.info("add the 'identifier' property to the return object of the callback in 'createStyles'".to_string());
+
+              "".to_string()
+            },
+          };
+
+          // if there is no identifier as property of the callback's return object
+          if !identifier.is_empty() {
+            // inserts the objects' map as the value of the "main" key in map
+            map.insert("main".to_string(), main);
+            // inserts the targetChildren objects' map as the value of the "children" key in map
+            map.insert("children".to_string(), children);
+            // inserts the current map into the create styles map
+            create_styles_map.insert(identifier.to_string(), map);
+          }
 
           // sets the input with the  remaining of the processed string
           input = r;
