@@ -549,9 +549,8 @@ impl Alchemist {
     input: HashMap<String, HashMap<String, HashMap<String, String>>>,
   ) {
     let is_modular = self.modular;
-    let mut idx = 0;
 
-    for (_, val) in input.iter() {
+    for (identifier, val) in input.iter() {
       for (k, v) in val.iter() {
         if k == "main" {
           for (key, value) in v.iter() {
@@ -587,14 +586,11 @@ impl Alchemist {
             }
           }
         } else if k == "children" {
-          let uniq_key = format!("targetChildren_{}", idx);
+          let uniq_key = format!("targetChildren_{}", identifier);
           let uniq_value = format!("{:#?}", v);
-          let uniqueness = format!(
-            "createStyles_{}: {{ {}: {{ {} }} }}",
-            idx, uniq_key, uniq_value
-          );
+          let uniqueness = format!("{}: {{ {}: {{ {} }} }}", identifier, uniq_key, uniq_value);
 
-          let _class_name = Self::generates_class_name(
+          let class_name = Self::generates_class_name(
             is_modular,
             path,
             true,
@@ -603,6 +599,8 @@ impl Alchemist {
             &uniq_value,
             &"".to_string(),
           );
+
+          println!("{}:{}", identifier, class_name);
 
           for (key, value) in v.iter() {
             if value.starts_with("{") && value.ends_with("}") {
@@ -623,8 +621,6 @@ impl Alchemist {
           }
         }
       }
-
-      idx += 1;
     }
   }
 }
