@@ -1,6 +1,7 @@
 use crate::core::property_core::PROPERTY_CORE;
 use crate::core::screen_core::SCREEN_CORE;
 use crate::core::selector_core::SELECTOR_CORE;
+use crate::rustal::classinator::classinator;
 use serde_json::{from_str, Value};
 use std::collections::HashMap;
 
@@ -19,13 +20,39 @@ impl Alchemist {
   }
 
   fn generates_class_name(
-    _is_modular: bool,
-    _is_unique: bool,
-    _property: &String,
-    _value: String,
-    _selector: &String,
+    is_modular: bool,
+    path: &str,
+    is_unique: bool,
+    uniqueness: &String,
+    property: &String,
+    value: &String,
+    selector: &String,
   ) -> String {
-    "".to_string()
+    let modular = if is_modular {
+      format!("-{}", classinator(path))
+    } else {
+      "".to_string()
+    };
+
+    let pseudo = if selector.len() > 0 {
+      format!("-{}", classinator(selector))
+    } else {
+      "".to_string()
+    };
+
+    let unique = if is_unique {
+      format!("-{}", classinator(uniqueness))
+    } else {
+      "".to_string()
+    };
+
+    format!(
+      "galadriel_{}{}{}{}",
+      classinator(&format!("{}:{}", property, value)),
+      pseudo,
+      unique,
+      modular
+    )
   }
 
   fn styles_formatter(is_nested: bool, input: &String) -> String {
@@ -67,6 +94,7 @@ impl Alchemist {
 
   fn next_sibling(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -75,6 +103,7 @@ impl Alchemist {
 
   fn subseq_sibling(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -83,6 +112,7 @@ impl Alchemist {
 
   fn type_of(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -91,6 +121,7 @@ impl Alchemist {
 
   fn direct_children(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -99,6 +130,7 @@ impl Alchemist {
 
   fn attr_starts_with(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -107,6 +139,7 @@ impl Alchemist {
 
   fn attr_contains(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -115,6 +148,7 @@ impl Alchemist {
 
   fn attr_ends_with(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -123,6 +157,7 @@ impl Alchemist {
 
   fn nth_child(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -131,6 +166,7 @@ impl Alchemist {
 
   fn nth_of_type(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -139,6 +175,7 @@ impl Alchemist {
 
   fn empty(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -147,6 +184,7 @@ impl Alchemist {
 
   fn checked(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -155,6 +193,7 @@ impl Alchemist {
 
   fn disabled(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -163,6 +202,7 @@ impl Alchemist {
 
   fn focus(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -171,6 +211,7 @@ impl Alchemist {
 
   fn active(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -179,6 +220,7 @@ impl Alchemist {
 
   fn not(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -187,6 +229,7 @@ impl Alchemist {
 
   fn visited(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -195,6 +238,7 @@ impl Alchemist {
 
   fn last_child(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -203,6 +247,7 @@ impl Alchemist {
 
   fn first_child(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -211,6 +256,7 @@ impl Alchemist {
 
   fn descendent(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -219,6 +265,7 @@ impl Alchemist {
 
   fn html_tag(
     _is_modular: bool,
+    _path: &str,
     _controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -227,54 +274,56 @@ impl Alchemist {
 
   fn process_children_objects(
     is_modular: bool,
+    path: &str,
     key: &String,
     value: &String,
   ) -> Result<(bool, String, String), String> {
     if key.starts_with("nextSibling") {
-      Self::next_sibling(is_modular, key.replace("nextSibling", ""), value)
+      Self::next_sibling(is_modular, path, key.replace("nextSibling", ""), value)
     } else if key.starts_with("subseqSibling") {
-      Self::subseq_sibling(is_modular, key.replace("subseqSibling", ""), value)
+      Self::subseq_sibling(is_modular, path, key.replace("subseqSibling", ""), value)
     } else if key.starts_with("typeOf") {
-      Self::type_of(is_modular, key.replace("typeOf", ""), value)
+      Self::type_of(is_modular, path, key.replace("typeOf", ""), value)
     } else if key.starts_with("directChildren") {
-      Self::direct_children(is_modular, key.replace("directChildren", ""), value)
+      Self::direct_children(is_modular, path, key.replace("directChildren", ""), value)
     } else if key.starts_with("attrStartsWith") {
-      Self::attr_starts_with(is_modular, key.replace("attrStartsWith", ""), value)
+      Self::attr_starts_with(is_modular, path, key.replace("attrStartsWith", ""), value)
     } else if key.starts_with("attrContains") {
-      Self::attr_contains(is_modular, key.replace("attrContains", ""), value)
+      Self::attr_contains(is_modular, path, key.replace("attrContains", ""), value)
     } else if key.starts_with("attrEndsWith") {
-      Self::attr_ends_with(is_modular, key.replace("attrEndsWith", ""), value)
+      Self::attr_ends_with(is_modular, path, key.replace("attrEndsWith", ""), value)
     } else if key.starts_with("nthChild") {
-      Self::nth_child(is_modular, key.replace("nthChild", ""), value)
+      Self::nth_child(is_modular, path, key.replace("nthChild", ""), value)
     } else if key.starts_with("nthOfType") {
-      Self::nth_of_type(is_modular, key.replace("nthOfType", ""), value)
+      Self::nth_of_type(is_modular, path, key.replace("nthOfType", ""), value)
     } else if key.starts_with("empty") {
-      Self::empty(is_modular, key.replace("empty", ""), value)
+      Self::empty(is_modular, path, key.replace("empty", ""), value)
     } else if key.starts_with("checked") {
-      Self::checked(is_modular, key.replace("checked", ""), value)
+      Self::checked(is_modular, path, key.replace("checked", ""), value)
     } else if key.starts_with("disabled") {
-      Self::disabled(is_modular, key.replace("disabled", ""), value)
+      Self::disabled(is_modular, path, key.replace("disabled", ""), value)
     } else if key.starts_with("focus") {
-      Self::focus(is_modular, key.replace("focus", ""), value)
+      Self::focus(is_modular, path, key.replace("focus", ""), value)
     } else if key.starts_with("active") {
-      Self::active(is_modular, key.replace("active", ""), value)
+      Self::active(is_modular, path, key.replace("active", ""), value)
     } else if key.starts_with("not") {
-      Self::not(is_modular, key.replace("not", ""), value)
+      Self::not(is_modular, path, key.replace("not", ""), value)
     } else if key.starts_with("visited") {
-      Self::visited(is_modular, key.replace("visited", ""), value)
+      Self::visited(is_modular, path, key.replace("visited", ""), value)
     } else if key.starts_with("lastChild") {
-      Self::last_child(is_modular, key.replace("lastChild", ""), value)
+      Self::last_child(is_modular, path, key.replace("lastChild", ""), value)
     } else if key.starts_with("firstChild") {
-      Self::first_child(is_modular, key.replace("firstChild", ""), value)
+      Self::first_child(is_modular, path, key.replace("firstChild", ""), value)
     } else if key.starts_with("(") && key.ends_with(")") {
-      Self::descendent(is_modular, key.to_string(), value)
+      Self::descendent(is_modular, path, key.to_string(), value)
     } else {
-      Self::html_tag(is_modular, key.to_string(), value)
+      Self::html_tag(is_modular, path, key.to_string(), value)
     }
   }
 
   fn process_nested_objects(
-    _is_modular: bool,
+    is_modular: bool,
+    path: &str,
     key: &String,
     value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -292,7 +341,7 @@ impl Alchemist {
 
     if !selector.is_empty() {
       let pseudo_selector = if !is_media_env {
-        selector
+        selector.clone()
       } else {
         "".to_string()
       };
@@ -305,12 +354,21 @@ impl Alchemist {
 
         for style in map.iter() {
           if style.len() > 0 && style.contains(":") {
-            let styles = format!(
-              ".{}{} {{ {} }}",
-              "galadriel_4414455", pseudo_selector, style
+            let prop: Vec<&str> = style.split(":").collect();
+
+            let class_name = Self::generates_class_name(
+              is_modular,
+              path,
+              false,
+              &"".to_string(),
+              &prop[0].trim().to_string(),
+              &prop[1].trim().to_string(),
+              &selector,
             );
 
-            stringified_styles.insert("galadriel_4414455".to_string(), styles);
+            let styles = format!(".{}{} {{ {} }}", class_name, pseudo_selector, style);
+
+            stringified_styles.insert(class_name, styles);
           }
         }
 
@@ -326,16 +384,26 @@ impl Alchemist {
   }
 
   fn process_property_value(
-    _is_modular: bool,
+    is_modular: bool,
+    path: &str,
     key: &String,
     value: &String,
   ) -> Result<(bool, String, String), String> {
     let formatted_styles = Self::styles_formatter(false, &format!("{{ {:?}:{:?} }}", key, value));
 
     if formatted_styles.len() > 0 {
-      let styles = format!(".{} {}", "galadriel_4414455", formatted_styles);
+      let class_name = Self::generates_class_name(
+        is_modular,
+        path,
+        false,
+        &"".to_string(),
+        key,
+        value,
+        &"".to_string(),
+      );
+      let styles = format!(".{} {}", class_name, formatted_styles);
 
-      return Ok((false, styles, "".to_string()));
+      return Ok((false, styles, class_name));
     }
 
     Ok((false, "".to_string(), "".to_string()))
@@ -343,22 +411,28 @@ impl Alchemist {
 
   fn processing_objects_by_type(
     is_modular: bool,
+    path: &str,
     is_nested: bool,
     is_children: bool,
     key: &String,
     value: &String,
   ) -> Result<(bool, String, String), String> {
     if is_nested {
-      Self::process_nested_objects(is_modular, key, &value)
+      Self::process_nested_objects(is_modular, path, key, &value)
     } else if is_children {
-      Self::process_children_objects(is_modular, key, value)
+      Self::process_children_objects(is_modular, path, key, value)
     } else {
-      Self::process_property_value(is_modular, key, value)
+      Self::process_property_value(is_modular, path, key, value)
     }
   }
 
-  pub fn process_objects(&self, input: HashMap<String, HashMap<String, HashMap<String, String>>>) {
+  pub fn process_objects(
+    &self,
+    path: &str,
+    input: HashMap<String, HashMap<String, HashMap<String, String>>>,
+  ) {
     let is_modular = self.modular;
+    let mut idx = 0;
 
     for (_, val) in input.iter() {
       for (k, v) in val.iter() {
@@ -366,15 +440,13 @@ impl Alchemist {
           for (key, value) in v.iter() {
             if value.starts_with("{") && value.ends_with("}") {
               if let Ok((is_media, styles, _class_name)) =
-                Self::processing_objects_by_type(is_modular, true, false, key, value)
+                Self::processing_objects_by_type(is_modular, path, true, false, key, value)
               {
                 if !styles.is_empty() {
                   let styles_map: Result<HashMap<String, String>, _> = from_str(&styles.as_str());
 
                   if let Ok(map) = styles_map {
                     for _style in map.iter() {
-                      
-
                       if is_media {
                         // adds into the media node
                         //println!("{:#?} --> {:#?}", key, style);
@@ -388,7 +460,7 @@ impl Alchemist {
               }
             } else {
               if let Ok((_, styles, _class_name)) =
-                Self::processing_objects_by_type(is_modular, false, false, key, value)
+                Self::processing_objects_by_type(is_modular, path, false, false, key, value)
               {
                 if !styles.is_empty() {
                   // adds into the property node
@@ -398,10 +470,27 @@ impl Alchemist {
             }
           }
         } else if k == "children" {
+          let uniq_key = format!("targetChildren_{}", idx);
+          let uniq_value = format!("{:#?}", v);
+          let uniqueness = format!(
+            "createStyles_{}: {{ {}: {{ {} }} }}",
+            idx, uniq_key, uniq_value
+          );
+
+          let _class_name = Self::generates_class_name(
+            is_modular,
+            path,
+            true,
+            &uniqueness,
+            &uniq_key,
+            &uniq_value,
+            &"".to_string(),
+          );
+
           for (key, value) in v.iter() {
             if value.starts_with("{") && value.ends_with("}") {
               if let Ok((is_media, styles, _class_name)) =
-                Self::processing_objects_by_type(is_modular, false, true, key, value)
+                Self::processing_objects_by_type(is_modular, path, false, true, key, value)
               {
                 //println!("{:#?}", styles);
 
@@ -417,6 +506,8 @@ impl Alchemist {
           }
         }
       }
+
+      idx += 1;
     }
   }
 }
