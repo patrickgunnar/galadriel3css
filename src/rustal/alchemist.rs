@@ -471,17 +471,17 @@ impl Alchemist {
     };
 
     if !selector.is_empty() {
-      let pseudo_selector = if !is_media_env {
+      let pseudo = if !is_media_env {
         selector.clone()
       } else {
         "".to_string()
       };
 
-      let stringified_map = Self::styles_formatter(true, value);
-      let json_map: Result<Vec<String>, _> = from_str(&stringified_map.as_str());
+      let map = Self::styles_formatter(true, value);
+      let json_map: Result<Vec<String>, _> = from_str(&map.as_str());
 
       if let Ok(styles_map) = json_map {
-        return Ok((is_media_env, selector, pseudo_selector, styles_map));
+        return Ok((is_media_env, selector, pseudo, styles_map));
       }
     }
 
@@ -497,7 +497,7 @@ impl Alchemist {
     let formatted_styles = Self::styles_formatter(false, &format!("{{ {:?}:{:?} }}", key, value));
 
     if formatted_styles.len() > 0 {
-      let class_name = Self::generates_class_name(
+      let cls_name = Self::generates_class_name(
         is_modular,
         path,
         false,
@@ -506,12 +506,200 @@ impl Alchemist {
         value,
         &"".to_string(),
       );
-      let styles = format!(".{} {}", class_name, formatted_styles);
 
-      return Ok((styles, class_name));
+      let css_cls = format!(".{} {}", cls_name, formatted_styles);
+
+      return Ok((css_cls, cls_name));
     }
 
     Ok(("".to_string(), "".to_string()))
+  }
+
+  fn process_ternary(input: &String) -> Result<(String, String), String> {
+    let mut ternary = input.as_str();
+    let mut is_cond = false;
+    let mut first_value = String::new();
+    let mut second_value = String::new();
+
+    while let Ok((rest, result)) = alt((
+      delimited(tag("\""), take_until("\""), tag("\"")),
+      delimited(tag("'"), take_until("'"), tag("'")),
+      Self::identifier_alpha_num,
+      tag(" "),
+      tag("$"),
+      tag("{"),
+      tag("?"),
+      tag(":"),
+      tag("}"),
+    ))(ternary)
+    {
+      if result == "?" {
+        is_cond = true;
+      } else if is_cond {
+        if result != " " && result != ":" && result != "}" {
+          if first_value.is_empty() {
+            first_value = result.to_string();
+          } else if second_value.is_empty() {
+            second_value = result.to_string();
+          }
+        }
+      }
+
+      ternary = rest;
+    }
+
+    Ok((first_value, second_value))
+  }
+
+  fn trigger_nested_process(
+    is_modular: bool,
+    is_media: bool,
+    path: &str,
+    key: &String,
+    selector: String,
+    pseudo: String,
+    styles_map: Vec<String>,
+  ) -> HashMap<String, String> {
+    let mut intern_objects_map: HashMap<String, String> = HashMap::new();
+
+    for value_str in styles_map.iter() {
+      if value_str.len() > 0 && value_str.contains(":") {
+        let mut intern_value_map: HashMap<String, String> = HashMap::new();
+        let props: Vec<String> = value_str.split(":").map(|k| k.trim().to_string()).collect();
+
+        let prop_key = &props[0];
+        let prop_value = &props[1];
+
+        if value_str.contains("${") && value_str.contains("}") {
+          if let Ok((first_value, second_value)) = Self::process_ternary(value_str) {
+            for ternary_v in &[first_value, second_value] {
+              let rule = format!("{}: {}", prop_key, ternary_v);
+              let cls_name = Self::generates_class_name(
+                is_modular,
+                path,
+                false,
+                &"".to_string(),
+                prop_key,
+                ternary_v,
+                &selector,
+              );
+
+              let css_cls = format!(".{}{} {{ {} }}", cls_name, pseudo, rule);
+              let appended_to_ast = Self::append_to_ast(is_media, key, &prop_key, css_cls);
+
+              if appended_to_ast {
+                intern_value_map.insert(ternary_v.to_string(), cls_name);
+              }
+            }
+          }
+        } else {
+          let cls_name = Self::generates_class_name(
+            is_modular,
+            path,
+            false,
+            &"".to_string(),
+            prop_key,
+            prop_value,
+            &selector,
+          );
+
+          let css_cls = format!(".{}{} {{ {} }}", cls_name, pseudo, value_str);
+          let appended_to_ast = Self::append_to_ast(is_media, key, &prop_key, css_cls);
+
+          if appended_to_ast {
+            intern_value_map.insert(prop_value.to_string(), cls_name);
+          }
+        }
+
+        if intern_value_map.len() > 0 {
+          intern_objects_map.insert(prop_key.to_string(), format!("{:?}", intern_value_map));
+        }
+      }
+    }
+
+    intern_objects_map
+  }
+
+  fn trigger_property_vale_process(
+    is_modular: bool,
+    path: &str,
+    key: &String,
+    value: &String,
+  ) -> HashMap<String, String> {
+    let mut intern_value_map: HashMap<String, String> = HashMap::new();
+
+    if value.contains("${") && value.contains("}") {
+      if let Ok((first_value, second_value)) = Self::process_ternary(value) {
+        for ternary_v in &[first_value, second_value] {
+          if let Ok((css_cls, cls_name)) =
+            Self::process_property_value(is_modular, path, key, ternary_v)
+          {
+            if !cls_name.is_empty() {
+              let appended_to_ast = Self::append_to_ast(false, &"".to_string(), key, css_cls);
+
+              if appended_to_ast {
+                intern_value_map.insert(ternary_v.to_string(), cls_name);
+              }
+            }
+          }
+        }
+      }
+    } else {
+      if let Ok((css_cls, cls_name)) = Self::process_property_value(is_modular, path, key, value) {
+        if !cls_name.is_empty() {
+          let appended_to_ast = Self::append_to_ast(false, &"".to_string(), key, css_cls);
+
+          if appended_to_ast {
+            intern_value_map.insert(value.to_string(), cls_name);
+          }
+        }
+      }
+    }
+
+    intern_value_map
+  }
+
+  fn trigger_children_objects_process(
+    is_modular: bool,
+    path: &str,
+    identifier: &String,
+    v: &HashMap<String, String>,
+  ) -> HashMap<String, String> {
+    let mut cls_map: HashMap<String, String> = HashMap::new();
+    let uniq_key = format!("targetChildren_{}", identifier);
+    let uniq_value = format!("{:#?}", v);
+    let uniqueness = format!("{}: {{ {}: {{ {} }} }}", identifier, uniq_key, uniq_value);
+
+    let cls_name = Self::generates_class_name(
+      is_modular,
+      path,
+      true,
+      &uniqueness,
+      &uniq_key,
+      &uniq_value,
+      &"".to_string(),
+    );
+
+    cls_map.insert("cls".to_string(), cls_name);
+
+    for (key, value) in v.iter() {
+      if value.starts_with("{") && value.ends_with("}") {
+        if let Ok((_is_media, _selector, css_cls)) =
+          Self::process_children_objects(is_modular, path, key, value)
+        {
+          if !css_cls.is_empty() {
+            /*Self::append_to_ast(
+              is_media,
+              &"".to_string(),
+              &"targetChildren".to_string(),
+              css_cls,
+            );*/
+          }
+        }
+      }
+    }
+
+    cls_map
   }
 
   fn append_to_ast(_is_media: bool, _selector: &String, _key: &String, _style: String) -> bool {
@@ -525,103 +713,45 @@ impl Alchemist {
     &self,
     path: &str,
     input: HashMap<String, HashMap<String, HashMap<String, String>>>,
-  ) -> HashMap<String, HashMap<String, String>> {
-    let mut create_styles_map: HashMap<String, HashMap<String, String>> = HashMap::new();
+  ) -> HashMap<String, HashMap<String, HashMap<String, String>>> {
     let is_modular = self.modular;
+    let mut create_styles_map: HashMap<String, HashMap<String, HashMap<String, String>>> =
+      HashMap::new();
 
     for (identifier, val) in input.iter() {
-      let mut class_name_map: HashMap<String, String> = HashMap::new();
+      let mut objects_map: HashMap<String, HashMap<String, String>> = HashMap::new();
 
       for (k, v) in val.iter() {
         if k == "main" {
           for (key, value) in v.iter() {
             if value.starts_with("{") && value.ends_with("}") {
-              let mut nested_class_name_map: HashMap<String, String> = HashMap::new();
-
-              if let Ok((is_media, selector, pseudo_selector, styles_map)) =
+              if let Ok((is_media, selector, pseudo, styles_map)) =
                 Self::process_nested_objects(key, &value)
               {
-                for data in styles_map.iter() {
-                  if data.len() > 0 && data.contains(":") {
-                    let props: Vec<String> =
-                      data.split(":").map(|k| k.trim().to_string()).collect();
+                let intern_objects_map = Self::trigger_nested_process(
+                  is_modular, is_media, path, key, selector, pseudo, styles_map,
+                );
 
-                    let class_name = Self::generates_class_name(
-                      is_modular,
-                      path,
-                      false,
-                      &"".to_string(),
-                      &props[0],
-                      &props[1],
-                      &selector,
-                    );
-
-                    let styles = format!(".{}{} {{ {} }}", class_name, pseudo_selector, data);
-                    let inserted =
-                      Self::append_to_ast(is_media, key, &props[0], styles.to_string());
-
-                    if inserted {
-                      nested_class_name_map
-                        .insert(props[0].trim().to_string(), class_name.to_string());
-                    }
-                  }
-                }
-
-                if styles_map.len() > 0 {
-                  class_name_map.insert(key.to_string(), format!("{:?}", nested_class_name_map));
+                if intern_objects_map.len() > 0 {
+                  objects_map.insert(key.to_string(), intern_objects_map);
                 }
               }
             } else {
-              if let Ok((styles, class_name)) =
-                Self::process_property_value(is_modular, path, key, value)
-              {
-                if !styles.is_empty() {
-                  let inserted = Self::append_to_ast(false, &"".to_string(), key, styles);
+              let intern_value_map =
+                Self::trigger_property_vale_process(is_modular, path, key, value);
 
-                  if inserted {
-                    class_name_map.insert(key.to_string(), class_name);
-                  }
-                }
+              if intern_value_map.len() > 0 {
+                objects_map.insert(key.to_string(), intern_value_map);
               }
             }
           }
         } else if k == "children" {
-          let uniq_key = format!("targetChildren_{}", identifier);
-          let uniq_value = format!("{:#?}", v);
-          let uniqueness = format!("{}: {{ {}: {{ {} }} }}", identifier, uniq_key, uniq_value);
-
-          let class_name = Self::generates_class_name(
-            is_modular,
-            path,
-            true,
-            &uniqueness,
-            &uniq_key,
-            &uniq_value,
-            &"".to_string(),
-          );
-
-          class_name_map.insert("targetChildren".to_string(), class_name.clone());
-
-          for (key, value) in v.iter() {
-            if value.starts_with("{") && value.ends_with("}") {
-              if let Ok((_is_media, _selector, styles)) =
-                Self::process_children_objects(is_modular, path, key, value)
-              {
-                if !styles.is_empty() {
-                  /*Self::append_to_ast(
-                    is_media,
-                    &"".to_string(),
-                    &"targetChildren".to_string(),
-                    styles,
-                  );*/
-                }
-              }
-            }
-          }
+          let cls_map = Self::trigger_children_objects_process(is_modular, path, identifier, v);
+          objects_map.insert("targetChildren".to_string(), cls_map);
         }
       }
 
-      create_styles_map.insert(identifier.to_string(), class_name_map);
+      create_styles_map.insert(identifier.to_string(), objects_map);
     }
 
     create_styles_map
