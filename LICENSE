@@ -18,11 +18,19 @@ copies or substantial portions of the Software.
 
 Attribution Clause:
 
-If you choose to copy, modify, or distribute the code of this library itself (not its use in projects), you must provide attribution to the original creator (Patrick Gunnar). Please include the following attribution notice:
+If you choose to copy, modify, or distribute the code of this library itself (not its use in projects), you must provide attribution to the original creator (Patrick Gunnar). Attribution is required under the following conditions:
 
-"Original Galadriel3CSS Library by Patrick Gunnar
-GitHub: https://github.com/patrickgunnar/galadriel3css
-LinkedIn: https://www.linkedin.com/in/patrickgunnar/"
+1. When distributing modified versions of the Galadriel3CSS code.
+2. The attribution notice must be included in the README.md file of the repository where the modified code is stored.
+
+```markdown
+# My Project
+
+This project uses a modified version of the Galadriel3CSS library by Patrick Gunnar.
+
+Original Galadriel3CSS Library by Patrick Gunnar
+GitHub: [https://github.com/patrickgunnar/galadriel3css](https://github.com/patrickgunnar/galadriel3css)
+LinkedIn: [https://www.linkedin.com/in/patrickgunnar/](https://www.linkedin.com/in/patrickgunnar/)
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
