@@ -502,6 +502,34 @@ impl Alchemist {
     Ok((first_value, second_value))
   }
 
+  fn trigger_append_of_nested(
+    is_media: bool,
+    is_modular: bool,
+    path: &str,
+    property: &String,
+    value: &String,
+    selector: &String,
+    pseudo: String,
+    rule: &String,
+    key: &String,
+  ) -> Result<(bool, String), String> {
+    let cls_name = Self::generates_class_name(
+      is_modular,
+      path,
+      false,
+      &"".to_string(),
+      property,
+      value,
+      selector,
+    );
+
+    let css_cls = format!(".{}{} {{ {} }}", cls_name, pseudo, rule);
+    println!("{}", css_cls);
+    let is_in_ast = Self::append_to_ast(is_media, key, property, css_cls);
+
+    Ok((is_in_ast, cls_name))
+  }
+
   fn trigger_nested_process(
     is_modular: bool,
     is_media: bool,
@@ -525,40 +553,39 @@ impl Alchemist {
           if let Ok((first_value, second_value)) = Self::process_ternary(value_str) {
             for ternary_v in &[first_value, second_value] {
               let rule = format!("{}: {}", prop_key, ternary_v);
-              let cls_name = Self::generates_class_name(
+
+              if let Ok((is_in_ast, cls_name)) = Self::trigger_append_of_nested(
+                is_media,
                 is_modular,
                 path,
-                false,
-                &"".to_string(),
-                prop_key,
+                &prop_key,
                 ternary_v,
                 &selector,
-              );
-
-              let css_cls = format!(".{}{} {{ {} }}", cls_name, pseudo, rule);
-              let appended_to_ast = Self::append_to_ast(is_media, key, &prop_key, css_cls);
-
-              if appended_to_ast {
-                intern_value_map.insert(ternary_v.to_string(), cls_name);
+                pseudo.clone(),
+                &rule,
+                key,
+              ) {
+                if is_in_ast {
+                  intern_value_map.insert(ternary_v.to_string(), cls_name);
+                }
               }
             }
           }
         } else {
-          let cls_name = Self::generates_class_name(
+          if let Ok((is_in_ast, cls_name)) = Self::trigger_append_of_nested(
+            is_media,
             is_modular,
             path,
-            false,
-            &"".to_string(),
-            prop_key,
-            prop_value,
+            &prop_key,
+            &prop_value,
             &selector,
-          );
-
-          let css_cls = format!(".{}{} {{ {} }}", cls_name, pseudo, value_str);
-          let appended_to_ast = Self::append_to_ast(is_media, key, &prop_key, css_cls);
-
-          if appended_to_ast {
-            intern_value_map.insert(prop_value.to_string(), cls_name);
+            pseudo.clone(),
+            value_str,
+            key,
+          ) {
+            if is_in_ast {
+              intern_value_map.insert(prop_value.to_string(), cls_name);
+            }
           }
         }
 
@@ -571,7 +598,24 @@ impl Alchemist {
     intern_objects_map
   }
 
-  fn trigger_property_vale_process(
+  fn trigger_append_of_property_value(
+    is_modular: bool,
+    path: &str,
+    key: &String,
+    value: &String,
+  ) -> Result<(bool, String), String> {
+    if let Ok((css_cls, cls_name)) = Self::process_property_value(is_modular, path, key, value) {
+      if !cls_name.is_empty() {
+        let is_in_ast = Self::append_to_ast(false, &"".to_string(), key, css_cls);
+
+        return Ok((is_in_ast, cls_name));
+      }
+    }
+
+    Ok((false, "".to_string()))
+  }
+
+  fn trigger_property_value_process(
     is_modular: bool,
     path: &str,
     key: &String,
@@ -582,27 +626,21 @@ impl Alchemist {
     if value.contains("${") && value.contains("}") {
       if let Ok((first_value, second_value)) = Self::process_ternary(value) {
         for ternary_v in &[first_value, second_value] {
-          if let Ok((css_cls, cls_name)) =
-            Self::process_property_value(is_modular, path, key, ternary_v)
+          if let Ok((is_in_ast, cls_name)) =
+            Self::trigger_append_of_property_value(is_modular, path, key, ternary_v)
           {
-            if !cls_name.is_empty() {
-              let appended_to_ast = Self::append_to_ast(false, &"".to_string(), key, css_cls);
-
-              if appended_to_ast {
-                intern_value_map.insert(ternary_v.to_string(), cls_name);
-              }
+            if is_in_ast {
+              intern_value_map.insert(ternary_v.to_string(), cls_name);
             }
           }
         }
       }
     } else {
-      if let Ok((css_cls, cls_name)) = Self::process_property_value(is_modular, path, key, value) {
-        if !cls_name.is_empty() {
-          let appended_to_ast = Self::append_to_ast(false, &"".to_string(), key, css_cls);
-
-          if appended_to_ast {
-            intern_value_map.insert(value.to_string(), cls_name);
-          }
+      if let Ok((is_in_ast, cls_name)) =
+        Self::trigger_append_of_property_value(is_modular, path, key, value)
+      {
+        if is_in_ast {
+          intern_value_map.insert(value.to_string(), cls_name);
         }
       }
     }
@@ -685,7 +723,7 @@ impl Alchemist {
               }
             } else {
               let intern_value_map =
-                Self::trigger_property_vale_process(is_modular, path, key, value);
+                Self::trigger_property_value_process(is_modular, path, key, value);
 
               if intern_value_map.len() > 0 {
                 objects_map.insert(key.to_string(), intern_value_map);
