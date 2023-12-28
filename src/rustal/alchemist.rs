@@ -27,6 +27,61 @@ impl Alchemist {
     Alchemist { modular }
   }
 
+  fn log_handler_not_processed(handler: &str, description: &str) {
+    let blueprint = Blueprint::new();
+
+    blueprint.warn(blueprint.bold(format!("the '{}' handler was not processed", handler)));
+    blueprint.warn(format!(
+      "ensure the '{}' handler includes {}",
+      handler, description
+    ));
+  }
+
+  fn log_for_children_array_param(handler: &str) {
+    Self::log_handler_not_processed(
+      handler,
+      "an array with HTML tag(s) as the first or second parameter in the handler",
+    );
+
+    let blueprint = Blueprint::new();
+
+    blueprint.info(format!(
+      "(example): add '{}(hover, ['div', ...], mobileScreen)' to the handler",
+      if handler == "descendent" { "" } else { handler }
+    ));
+    blueprint.info(
+      "the pseudo-selector (first parameter) and media query (third parameter) are optional"
+        .to_string(),
+    );
+  }
+
+  fn log_for_children_tag_param(handler: &str) {
+    Self::log_handler_not_processed(handler, "an HTML tag as the first parameter in the handler");
+
+    let blueprint = Blueprint::new();
+
+    blueprint.info(format!(
+      "(example): add '{}(div, mobileScreen)' to the handler",
+      handler
+    ));
+    blueprint.info("the media query (second parameter) is optional".to_string());
+  }
+
+  fn log_for_children_attr_param(handler: &str) {
+    Self::log_handler_not_processed(
+        handler,
+        "an HTML tag and an array containing the attribute(s) as the first and second parameters in the handler",
+    );
+
+    let blueprint = Blueprint::new();
+
+    blueprint.info(format!(
+      "(example): add '{}(div, ['attr', ...], mobileScreen)' to the handler",
+      handler
+    ));
+    blueprint.info("the media query (third parameter) is optional".to_string());
+  }
+
   fn get_middle_x(x: usize, input: &str) -> String {
     let len = input.len();
 
@@ -191,169 +246,451 @@ impl Alchemist {
     Ok((first_prop, second_prop, third_prop))
   }
 
+  fn process_children_handler_for_array(
+    sep: &str,
+    tags: Vec<String>,
+    pseudo: &String,
+    media: &String,
+    input: &String,
+  ) -> Result<(bool, String, String), String> {
+    let siblings = tags.join(sep);
+
+    let pseudo = if let Some(v) = SELECTOR_CORE.get(pseudo) {
+      v.to_string()
+    } else {
+      "".to_string()
+    };
+
+    let media = if let Some(v) = SCREEN_CORE.get(media) {
+      v.to_string()
+    } else {
+      "".to_string()
+    };
+
+    let is_media = if !media.is_empty() { true } else { false };
+    let styles = Self::styles_formatter(false, input, false);
+
+    if !styles.is_empty() {
+      let css_cls = format!("{}{} {}", siblings, pseudo, styles);
+
+      return Ok((is_media, media, css_cls));
+    }
+
+    Ok((false, "".to_string(), "".to_string()))
+  }
+
+  fn process_children_handler_for_tag(
+    tag: &String,
+    pseudo: &str,
+    media: &String,
+    input: &String,
+  ) -> Result<(bool, String, String), String> {
+    let media = if let Some(v) = SCREEN_CORE.get(media) {
+      v.to_string()
+    } else {
+      "".to_string()
+    };
+
+    let is_media = if !media.is_empty() { true } else { false };
+    let styles = Self::styles_formatter(false, input, false);
+
+    if !styles.is_empty() {
+      let css_cls = format!("{}:{} {}", tag, pseudo, styles);
+
+      return Ok((is_media, media, css_cls));
+    }
+
+    Ok((false, "".to_string(), "".to_string()))
+  }
+
+  fn process_children_handler_for_attr(
+    sep: &str,
+    tag: &String,
+    typo: &str,
+    attr: &String,
+    media: &String,
+    input: &String,
+  ) -> Result<(bool, String, String), String> {
+    let media = if let Some(v) = SCREEN_CORE.get(media) {
+      v.to_string()
+    } else {
+      "".to_string()
+    };
+
+    let is_media = if !media.is_empty() { true } else { false };
+    let styles = Self::styles_formatter(false, input, false);
+
+    if !styles.is_empty() {
+      let css_cls = format!(
+        "{}[{}{}{}] {}",
+        tag,
+        typo,
+        sep,
+        format!("'{}'", attr),
+        styles
+      );
+
+      return Ok((is_media, media, css_cls));
+    }
+
+    Ok((false, "".to_string(), "".to_string()))
+  }
+
+  fn process_children_handler_for_func(
+    tag: &String,
+    pseudo: &str,
+    attr: &String,
+    media: &String,
+    input: &String,
+  ) -> Result<(bool, String, String), String> {
+    let media = if let Some(v) = SCREEN_CORE.get(media) {
+      v.to_string()
+    } else {
+      "".to_string()
+    };
+
+    let is_media = if !media.is_empty() { true } else { false };
+    let styles = Self::styles_formatter(false, input, false);
+
+    if !styles.is_empty() {
+      let css_cls = format!("{}:{}({}) {}", tag, pseudo, attr, styles);
+
+      return Ok((is_media, media, css_cls));
+    }
+
+    Ok((false, "".to_string(), "".to_string()))
+  }
+
   fn next_sibling(controller: String, value: &String) -> Result<(bool, String, String), String> {
     if let Ok((pseudo, tags, media)) = Self::collects_properties(controller) {
       if tags.len() > 0 && !tags[0].is_empty() {
-        let siblings = tags.join(" ");
-
-        let pseudo = if let Some(v) = SELECTOR_CORE.get(&pseudo) {
-          v.to_string()
-        } else {
-          "".to_string()
-        };
-
-        let media = if let Some(v) = SCREEN_CORE.get(&media) {
-          v.to_string()
-        } else {
-          "".to_string()
-        };
-
-        let is_media = if !media.is_empty() { true } else { false };
-        let styles = Self::styles_formatter(false, value, false);
-
-        if !styles.is_empty() {
-          let css_cls = format!("{}{} {}", siblings, pseudo, styles);
-
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_array(" + ", tags, &pseudo, &media, value)
+        {
           return Ok((is_media, media, css_cls));
         }
       } else {
-        let blueprint = Blueprint::new();
-
-        blueprint.warn(blueprint.bold("the 'nextSibling' handler was not processed".to_string()));
-        blueprint
-          .warn("ensure the 'nextSibling' handler includes an array with HTML tag(s)".to_string());
-        blueprint.info(
-          "place the array property as the first or second parameter in the handler".to_string(),
-        );
-        blueprint.info(
-          "(example): add 'nextSibling(hover, ['div', ...], mobileScreen)' to the handler"
-            .to_string(),
-        );
-        blueprint.info(
-          "the pseudo-selector (first parameter) and media query (third parameter) are optional"
-            .to_string(),
-        );
+        Self::log_for_children_array_param("nextSibling");
       }
     }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn subseq_sibling(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn subseq_sibling(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((pseudo, tags, media)) = Self::collects_properties(controller) {
+      if tags.len() > 0 && !tags[0].is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_array(" ~ ", tags, &pseudo, &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_array_param("subseqSibling");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn type_of(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn type_of(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, attr, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() && !attr[0].is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_attr("=", &tag, "type", &attr[0], &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_attr_param("typeOf");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn direct_children(
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn direct_children(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((pseudo, tags, media)) = Self::collects_properties(controller) {
+      if tags.len() > 0 && !tags[0].is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_array(" > ", tags, &pseudo, &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_array_param("directChildren");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
   fn attr_starts_with(
     controller: String,
-    _value: &String,
+    value: &String,
   ) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+    if let Ok((tag, attr, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() && attr.len() > 1 && !attr[0].is_empty() && !attr[1].is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_attr("^=", &tag, &attr[0], &attr[1], &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_attr_param("attrStartsWith");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn attr_contains(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn attr_contains(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, attr, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() && attr.len() > 1 && !attr[0].is_empty() && !attr[1].is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_attr("*=", &tag, &attr[0], &attr[1], &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_attr_param("attrContains");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn attr_ends_with(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn attr_ends_with(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, attr, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() && attr.len() > 1 && !attr[0].is_empty() && !attr[1].is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_attr("$=", &tag, &attr[0], &attr[1], &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_attr_param("attrEndsWith");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn nth_child(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn nth_child(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, attr, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() && !attr[0].is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_func(&tag, "nth-child", &attr[0], &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_attr_param("nthChild");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn nth_of_type(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn nth_of_type(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, attr, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() && !attr[0].is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_func(&tag, "nth-of-type", &attr[0], &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_attr_param("nthOfType");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn empty(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn empty(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, _, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_tag(&tag, "empty", &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_tag_param("empty");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn checked(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn checked(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, _, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_tag(&tag, "checked", &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_tag_param("checked");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn disabled(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn disabled(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, _, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_tag(&tag, "disabled", &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_tag_param("disabled");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn focus(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn focus(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, _, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_tag(&tag, "focus", &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_tag_param("focus");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn active(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn active(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, _, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_tag(&tag, "active", &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_tag_param("active");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn not(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn not(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, attr, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() && !attr[0].is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_func(&tag, "not", &attr[0], &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_attr_param("not");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn visited(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn visited(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, _, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_tag(&tag, "visited", &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_tag_param("visited");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn last_child(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn last_child(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, _, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_tag(&tag, "last-child", &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_tag_param("last-child");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn first_child(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn first_child(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, _, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_tag(&tag, "first-child", &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_tag_param("first-child");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn descendent(controller: String, _value: &String) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
+  fn descendent(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((pseudo, tags, media)) = Self::collects_properties(controller) {
+      if tags.len() > 0 && !tags[0].is_empty() {
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_array(" ", tags, &pseudo, &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        Self::log_for_children_array_param("descendent");
+      }
+    }
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn html_tag(_controller: String, _value: &String) -> Result<(bool, String, String), String> {
+  fn html_tag(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((tag, _, media)) = Self::collects_properties(controller) {
+      if !tag.is_empty() {
+        let mut tags = vec![];
+
+        tags.push(tag);
+
+        if let Ok((is_media, media, css_cls)) =
+          Self::process_children_handler_for_array("", tags, &"".to_string(), &media, value)
+        {
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        let blueprint = Blueprint::new();
+
+        blueprint
+          .warn(blueprint.bold("the 'targetChildren' handler is missing an HTML tag".to_string()));
+        blueprint.info(
+          "ensure to include the necessary HTML tag to process styles for the children".to_string(),
+        );
+      }
+    }
+
     Ok((false, "".to_string(), "".to_string()))
   }
 
@@ -524,7 +861,6 @@ impl Alchemist {
     );
 
     let css_cls = format!(".{}{} {{ {} }}", cls_name, pseudo, rule);
-    println!("{}", css_cls);
     let is_in_ast = Self::append_to_ast(is_media, key, property, css_cls);
 
     Ok((is_in_ast, cls_name))
@@ -676,7 +1012,6 @@ impl Alchemist {
         if let Ok((is_media, selector, css_cls)) = Self::process_children_objects(key, value) {
           if !css_cls.is_empty() {
             let cls = format!(".{} {}", cls_name, css_cls);
-            println!("{}", cls);
 
             Self::append_to_ast(is_media, &selector, &"targetChildren".to_string(), cls);
           }
@@ -687,9 +1022,9 @@ impl Alchemist {
     cls_map
   }
 
-  fn append_to_ast(_is_media: bool, _selector: &String, _key: &String, _style: String) -> bool {
-    //println!("is_media: {}, selector: {}", is_media, selector);
-    //println!("key: {}, style: {}\n", key, style);
+  fn append_to_ast(is_media: bool, selector: &String, key: &String, style: String) -> bool {
+    println!("is_media: {}, selector: {}", is_media, selector);
+    println!("key: {}, style: {}\n", key, style);
 
     true
   }
