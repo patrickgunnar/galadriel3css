@@ -177,7 +177,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -188,7 +188,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -199,7 +199,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -210,7 +210,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -221,7 +221,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -232,7 +232,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -243,7 +243,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -254,7 +254,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -265,7 +265,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -276,7 +276,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -287,7 +287,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -298,7 +298,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -309,7 +309,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -320,7 +320,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -331,7 +331,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -342,7 +342,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -353,7 +353,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -364,7 +364,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -375,7 +375,7 @@ impl Alchemist {
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
-    let props = Self::collects_properties(controller);
+    let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
@@ -467,10 +467,11 @@ impl Alchemist {
       let styles_map: Result<Vec<String>, _> = from_str(&stringified_map.as_str());
 
       if let Ok(map) = styles_map {
-        let mut stringified_styles: HashMap<String, String> = HashMap::new();
+        let mut stringified_styles: HashMap<String, HashMap<String, String>> = HashMap::new();
 
         for style in map.iter() {
           if style.len() > 0 && style.contains(":") {
+            let mut temp_map: HashMap<String, String> = HashMap::new();
             let prop: Vec<&str> = style.split(":").collect();
 
             let class_name = Self::generates_class_name(
@@ -485,7 +486,8 @@ impl Alchemist {
 
             let styles = format!(".{}{} {{ {} }}", class_name, pseudo_selector, style);
 
-            stringified_styles.insert(class_name, styles);
+            temp_map.insert(class_name, styles);
+            stringified_styles.insert(prop[0].trim().to_string(), temp_map);
           }
         }
 
@@ -543,44 +545,64 @@ impl Alchemist {
     }
   }
 
+  fn append_to_ast(_is_media: bool, _selector: &String, _key: &String, _style: String) -> bool {
+    //println!("is_media: {}, selector: {}", is_media, selector);
+    //println!("key: {}, style: {}\n", key, style);
+
+    true
+  }
+
   pub fn process_objects(
     &self,
     path: &str,
     input: HashMap<String, HashMap<String, HashMap<String, String>>>,
-  ) {
+  ) -> HashMap<String, HashMap<String, String>> {
+    let mut create_styles_map: HashMap<String, HashMap<String, String>> = HashMap::new();
     let is_modular = self.modular;
 
     for (identifier, val) in input.iter() {
+      let mut class_name_map: HashMap<String, String> = HashMap::new();
+
       for (k, v) in val.iter() {
         if k == "main" {
           for (key, value) in v.iter() {
             if value.starts_with("{") && value.ends_with("}") {
-              if let Ok((is_media, styles, _class_name)) =
+              let mut nested_class_name_map: HashMap<String, String> = HashMap::new();
+
+              if let Ok((is_media, styles, _)) =
                 Self::processing_objects_by_type(is_modular, path, true, false, key, value)
               {
                 if !styles.is_empty() {
-                  let styles_map: Result<HashMap<String, String>, _> = from_str(&styles.as_str());
+                  let styles_map: Result<HashMap<String, HashMap<String, String>>, _> =
+                    from_str(&styles.as_str());
 
                   if let Ok(map) = styles_map {
-                    for _style in map.iter() {
-                      if is_media {
-                        // adds into the media node
-                        //println!("{:#?} --> {:#?}", key, style);
-                      } else {
-                        // adds into the property node
-                        //println!("{:#?}", style);
+                    for (nested_k, data) in map.iter() {
+                      for (class_name, style) in data.iter() {
+                        let inserted =
+                          Self::append_to_ast(is_media, key, nested_k, style.to_string());
+
+                        if inserted {
+                          nested_class_name_map
+                            .insert(nested_k.to_string(), class_name.to_string());
+                        }
                       }
                     }
                   }
+
+                  class_name_map.insert(key.to_string(), format!("{:?}", nested_class_name_map));
                 }
               }
             } else {
-              if let Ok((_, styles, _class_name)) =
+              if let Ok((_, styles, class_name)) =
                 Self::processing_objects_by_type(is_modular, path, false, false, key, value)
               {
                 if !styles.is_empty() {
-                  // adds into the property node
-                  //println!("{:#?}", styles);
+                  let inserted = Self::append_to_ast(false, &"".to_string(), key, styles);
+
+                  if inserted {
+                    class_name_map.insert(key.to_string(), class_name);
+                  }
                 }
               }
             }
@@ -600,27 +622,30 @@ impl Alchemist {
             &"".to_string(),
           );
 
-          println!("{}:{}", identifier, class_name);
+          class_name_map.insert("targetChildren".to_string(), class_name.clone());
 
           for (key, value) in v.iter() {
             if value.starts_with("{") && value.ends_with("}") {
-              if let Ok((is_media, styles, _class_name)) =
+              if let Ok((_is_media, styles, _)) =
                 Self::processing_objects_by_type(is_modular, path, false, true, key, value)
               {
-                //println!("{:#?}", styles);
-
                 if !styles.is_empty() {
-                  if is_media {
-                    // adds into the media node
-                  } else {
-                    // adds into the property node
-                  }
+                  /*Self::append_to_ast(
+                    is_media,
+                    &"".to_string(),
+                    &"targetChildren".to_string(),
+                    styles,
+                  );*/
                 }
               }
             }
           }
         }
       }
+
+      create_styles_map.insert(identifier.to_string(), class_name_map);
     }
+
+    create_styles_map
   }
 }

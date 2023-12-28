@@ -45,7 +45,8 @@ pub fn process_path(path: String) {
     };
 
     let alchemist = Alchemist::new(modular);
+    let create_styles_map = alchemist.process_objects(path.as_str(), map);
 
-    alchemist.process_objects(path.as_str(), map);
+    println!("{:#?}", create_styles_map);
   }
 }
