@@ -1,7 +1,9 @@
 use crate::core::property_core::PROPERTY_CORE;
 use crate::core::screen_core::SCREEN_CORE;
 use crate::core::selector_core::SELECTOR_CORE;
+use crate::rustal::blueprint::Blueprint;
 use crate::rustal::classinator::classinator;
+
 use nom::{
   branch::alt,
   bytes::complete::{tag, take_until, take_while1},
@@ -77,7 +79,7 @@ impl Alchemist {
     )
   }
 
-  fn styles_formatter(is_nested: bool, input: &String) -> String {
+  fn styles_formatter(is_nested: bool, input: &String, incl_ternary: bool) -> String {
     let mut map: Vec<String> = Vec::new();
     let content: Result<serde_json::Value, _> = from_str(&input);
 
@@ -97,7 +99,9 @@ impl Alchemist {
             };
 
             if !property.is_empty() && !value.is_empty() {
-              map.push(format!("{}: {}", property, value));
+              if !value.contains("${") && !value.contains("}") || incl_ternary {
+                map.push(format!("{}: {}", property, value));
+              }
             }
           }
         }
@@ -187,42 +191,67 @@ impl Alchemist {
     Ok((first_prop, second_prop, third_prop))
   }
 
-  fn next_sibling(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn next_sibling(controller: String, value: &String) -> Result<(bool, String, String), String> {
+    if let Ok((pseudo, tags, media)) = Self::collects_properties(controller) {
+      if tags.len() > 0 && !tags[0].is_empty() {
+        let siblings = tags.join(" ");
+
+        let pseudo = if let Some(v) = SELECTOR_CORE.get(&pseudo) {
+          v.to_string()
+        } else {
+          "".to_string()
+        };
+
+        let media = if let Some(v) = SCREEN_CORE.get(&media) {
+          v.to_string()
+        } else {
+          "".to_string()
+        };
+
+        let is_media = if !media.is_empty() { true } else { false };
+        let styles = Self::styles_formatter(false, value, false);
+
+        if !styles.is_empty() {
+          let css_cls = format!("{}{} {}", siblings, pseudo, styles);
+
+          return Ok((is_media, media, css_cls));
+        }
+      } else {
+        let blueprint = Blueprint::new();
+
+        blueprint.warn(blueprint.bold("the 'nextSibling' handler was not processed".to_string()));
+        blueprint
+          .warn("ensure the 'nextSibling' handler includes an array with HTML tag(s)".to_string());
+        blueprint.info(
+          "place the array property as the first or second parameter in the handler".to_string(),
+        );
+        blueprint.info(
+          "(example): add 'nextSibling(hover, ['div', ...], mobileScreen)' to the handler"
+            .to_string(),
+        );
+        blueprint.info(
+          "the pseudo-selector (first parameter) and media query (third parameter) are optional"
+            .to_string(),
+        );
+      }
+    }
+
+    Ok((false, "".to_string(), "".to_string()))
+  }
+
+  fn subseq_sibling(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn subseq_sibling(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
-    let _props = Self::collects_properties(controller);
-
-    Ok((false, "".to_string(), "".to_string()))
-  }
-
-  fn type_of(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn type_of(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
   fn direct_children(
-    _is_modular: bool,
-    _path: &str,
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -232,8 +261,6 @@ impl Alchemist {
   }
 
   fn attr_starts_with(
-    _is_modular: bool,
-    _path: &str,
     controller: String,
     _value: &String,
   ) -> Result<(bool, String, String), String> {
@@ -242,215 +269,138 @@ impl Alchemist {
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn attr_contains(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn attr_contains(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn attr_ends_with(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn attr_ends_with(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn nth_child(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn nth_child(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn nth_of_type(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn nth_of_type(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn empty(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn empty(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn checked(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn checked(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn disabled(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn disabled(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn focus(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn focus(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn active(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn active(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn not(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn not(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn visited(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn visited(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn last_child(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn last_child(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn first_child(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn first_child(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn descendent(
-    _is_modular: bool,
-    _path: &str,
-    controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn descendent(controller: String, _value: &String) -> Result<(bool, String, String), String> {
     let _props = Self::collects_properties(controller);
 
     Ok((false, "".to_string(), "".to_string()))
   }
 
-  fn html_tag(
-    _is_modular: bool,
-    _path: &str,
-    _controller: String,
-    _value: &String,
-  ) -> Result<(bool, String, String), String> {
+  fn html_tag(_controller: String, _value: &String) -> Result<(bool, String, String), String> {
     Ok((false, "".to_string(), "".to_string()))
   }
 
   fn process_children_objects(
-    is_modular: bool,
-    path: &str,
     key: &String,
     value: &String,
   ) -> Result<(bool, String, String), String> {
     if key.starts_with("nextSibling") {
-      Self::next_sibling(is_modular, path, key.replace("nextSibling", ""), value)
+      Self::next_sibling(key.replace("nextSibling", ""), value)
     } else if key.starts_with("subseqSibling") {
-      Self::subseq_sibling(is_modular, path, key.replace("subseqSibling", ""), value)
+      Self::subseq_sibling(key.replace("subseqSibling", ""), value)
     } else if key.starts_with("typeOf") {
-      Self::type_of(is_modular, path, key.replace("typeOf", ""), value)
+      Self::type_of(key.replace("typeOf", ""), value)
     } else if key.starts_with("directChildren") {
-      Self::direct_children(is_modular, path, key.replace("directChildren", ""), value)
+      Self::direct_children(key.replace("directChildren", ""), value)
     } else if key.starts_with("attrStartsWith") {
-      Self::attr_starts_with(is_modular, path, key.replace("attrStartsWith", ""), value)
+      Self::attr_starts_with(key.replace("attrStartsWith", ""), value)
     } else if key.starts_with("attrContains") {
-      Self::attr_contains(is_modular, path, key.replace("attrContains", ""), value)
+      Self::attr_contains(key.replace("attrContains", ""), value)
     } else if key.starts_with("attrEndsWith") {
-      Self::attr_ends_with(is_modular, path, key.replace("attrEndsWith", ""), value)
+      Self::attr_ends_with(key.replace("attrEndsWith", ""), value)
     } else if key.starts_with("nthChild") {
-      Self::nth_child(is_modular, path, key.replace("nthChild", ""), value)
+      Self::nth_child(key.replace("nthChild", ""), value)
     } else if key.starts_with("nthOfType") {
-      Self::nth_of_type(is_modular, path, key.replace("nthOfType", ""), value)
+      Self::nth_of_type(key.replace("nthOfType", ""), value)
     } else if key.starts_with("empty") {
-      Self::empty(is_modular, path, key.replace("empty", ""), value)
+      Self::empty(key.replace("empty", ""), value)
     } else if key.starts_with("checked") {
-      Self::checked(is_modular, path, key.replace("checked", ""), value)
+      Self::checked(key.replace("checked", ""), value)
     } else if key.starts_with("disabled") {
-      Self::disabled(is_modular, path, key.replace("disabled", ""), value)
+      Self::disabled(key.replace("disabled", ""), value)
     } else if key.starts_with("focus") {
-      Self::focus(is_modular, path, key.replace("focus", ""), value)
+      Self::focus(key.replace("focus", ""), value)
     } else if key.starts_with("active") {
-      Self::active(is_modular, path, key.replace("active", ""), value)
+      Self::active(key.replace("active", ""), value)
     } else if key.starts_with("not") {
-      Self::not(is_modular, path, key.replace("not", ""), value)
+      Self::not(key.replace("not", ""), value)
     } else if key.starts_with("visited") {
-      Self::visited(is_modular, path, key.replace("visited", ""), value)
+      Self::visited(key.replace("visited", ""), value)
     } else if key.starts_with("lastChild") {
-      Self::last_child(is_modular, path, key.replace("lastChild", ""), value)
+      Self::last_child(key.replace("lastChild", ""), value)
     } else if key.starts_with("firstChild") {
-      Self::first_child(is_modular, path, key.replace("firstChild", ""), value)
+      Self::first_child(key.replace("firstChild", ""), value)
     } else if key.starts_with("(") && key.ends_with(")") {
-      Self::descendent(is_modular, path, key.to_string(), value)
+      Self::descendent(key.to_string(), value)
     } else {
-      Self::html_tag(is_modular, path, key.to_string(), value)
+      Self::html_tag(key.to_string(), value)
     }
   }
 
@@ -477,7 +427,7 @@ impl Alchemist {
         "".to_string()
       };
 
-      let map = Self::styles_formatter(true, value);
+      let map = Self::styles_formatter(true, value, true);
       let json_map: Result<Vec<String>, _> = from_str(&map.as_str());
 
       if let Ok(styles_map) = json_map {
@@ -494,7 +444,8 @@ impl Alchemist {
     key: &String,
     value: &String,
   ) -> Result<(String, String), String> {
-    let formatted_styles = Self::styles_formatter(false, &format!("{{ {:?}:{:?} }}", key, value));
+    let formatted_styles =
+      Self::styles_formatter(false, &format!("{{ {:?}:{:?} }}", key, value), true);
 
     if formatted_styles.len() > 0 {
       let cls_name = Self::generates_class_name(
@@ -680,20 +631,16 @@ impl Alchemist {
       &"".to_string(),
     );
 
-    cls_map.insert("cls".to_string(), cls_name);
+    cls_map.insert("cls".to_string(), cls_name.clone());
 
     for (key, value) in v.iter() {
       if value.starts_with("{") && value.ends_with("}") {
-        if let Ok((_is_media, _selector, css_cls)) =
-          Self::process_children_objects(is_modular, path, key, value)
-        {
+        if let Ok((is_media, selector, css_cls)) = Self::process_children_objects(key, value) {
           if !css_cls.is_empty() {
-            /*Self::append_to_ast(
-              is_media,
-              &"".to_string(),
-              &"targetChildren".to_string(),
-              css_cls,
-            );*/
+            let cls = format!(".{} {}", cls_name, css_cls);
+            println!("{}", cls);
+
+            Self::append_to_ast(is_media, &selector, &"targetChildren".to_string(), cls);
           }
         }
       }
