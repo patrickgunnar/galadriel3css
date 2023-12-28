@@ -1,4 +1,8 @@
-Copyright (c) 2023 Patrick Gunnar
+Copyright (c) 2024 Patrick Gunnar
+
+MIT License with Attribution Clause
+
+The MIT License (MIT)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -9,6 +13,16 @@ furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
+
+---
+
+Attribution Clause:
+
+If you choose to copy, modify, or distribute the code of this library itself (not its use in projects), you must provide attribution to the original creator (Patrick Gunnar). Please include the following attribution notice:
+
+"Original Galadriel3CSS Library by Patrick Gunnar
+GitHub: https://github.com/patrickgunnar/galadriel3css
+LinkedIn: https://www.linkedin.com/in/patrickgunnar/"
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
