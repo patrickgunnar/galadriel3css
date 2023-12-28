@@ -25,6 +25,19 @@ impl Alchemist {
     Alchemist { modular }
   }
 
+  fn get_middle_x(x: usize, input: &str) -> String {
+    let len = input.len();
+
+    if len >= 4 {
+      let start = len / 2 - x / 2;
+      let end = start + x;
+
+      input[start..end].to_string()
+    } else {
+      input.to_string()
+    }
+  }
+
   fn generates_class_name(
     is_modular: bool,
     path: &str,
@@ -35,26 +48,29 @@ impl Alchemist {
     selector: &String,
   ) -> String {
     let modular = if is_modular {
-      format!("-{}", classinator(path))
+      format!("{}", Self::get_middle_x(4, &classinator(path).as_str()))
     } else {
       "".to_string()
     };
 
     let pseudo = if selector.len() > 0 {
-      format!("-{}", classinator(selector))
+      format!("{}", Self::get_middle_x(4, &classinator(selector).as_str()))
     } else {
       "".to_string()
     };
 
     let unique = if is_unique {
-      format!("-{}", classinator(uniqueness))
+      format!(
+        "{}",
+        Self::get_middle_x(4, &classinator(uniqueness).as_str())
+      )
     } else {
       "".to_string()
     };
 
     format!(
       "galadriel_{}{}{}{}",
-      classinator(&format!("{}:{}", property, value)),
+      Self::get_middle_x(6, &classinator(&format!("{}:{}", property, value)).as_str()),
       pseudo,
       unique,
       modular
@@ -439,11 +455,9 @@ impl Alchemist {
   }
 
   fn process_nested_objects(
-    is_modular: bool,
-    path: &str,
     key: &String,
     value: &String,
-  ) -> Result<(bool, String, String), String> {
+  ) -> Result<(bool, String, String, Vec<String>), String> {
     let mut is_media_env = false;
     let selector = if let Some(v) = SELECTOR_CORE.get(key) {
       v.to_string()
@@ -464,42 +478,14 @@ impl Alchemist {
       };
 
       let stringified_map = Self::styles_formatter(true, value);
-      let styles_map: Result<Vec<String>, _> = from_str(&stringified_map.as_str());
+      let json_map: Result<Vec<String>, _> = from_str(&stringified_map.as_str());
 
-      if let Ok(map) = styles_map {
-        let mut stringified_styles: HashMap<String, HashMap<String, String>> = HashMap::new();
-
-        for style in map.iter() {
-          if style.len() > 0 && style.contains(":") {
-            let mut temp_map: HashMap<String, String> = HashMap::new();
-            let prop: Vec<&str> = style.split(":").collect();
-
-            let class_name = Self::generates_class_name(
-              is_modular,
-              path,
-              false,
-              &"".to_string(),
-              &prop[0].trim().to_string(),
-              &prop[1].trim().to_string(),
-              &selector,
-            );
-
-            let styles = format!(".{}{} {{ {} }}", class_name, pseudo_selector, style);
-
-            temp_map.insert(class_name, styles);
-            stringified_styles.insert(prop[0].trim().to_string(), temp_map);
-          }
-        }
-
-        return Ok((
-          is_media_env,
-          format!("{:?}", stringified_styles),
-          "".to_string(),
-        ));
+      if let Ok(styles_map) = json_map {
+        return Ok((is_media_env, selector, pseudo_selector, styles_map));
       }
     }
 
-    Ok((false, "".to_string(), "".to_string()))
+    Ok((false, "".to_string(), "".to_string(), vec![]))
   }
 
   fn process_property_value(
@@ -507,7 +493,7 @@ impl Alchemist {
     path: &str,
     key: &String,
     value: &String,
-  ) -> Result<(bool, String, String), String> {
+  ) -> Result<(String, String), String> {
     let formatted_styles = Self::styles_formatter(false, &format!("{{ {:?}:{:?} }}", key, value));
 
     if formatted_styles.len() > 0 {
@@ -522,27 +508,10 @@ impl Alchemist {
       );
       let styles = format!(".{} {}", class_name, formatted_styles);
 
-      return Ok((false, styles, class_name));
+      return Ok((styles, class_name));
     }
 
-    Ok((false, "".to_string(), "".to_string()))
-  }
-
-  fn processing_objects_by_type(
-    is_modular: bool,
-    path: &str,
-    is_nested: bool,
-    is_children: bool,
-    key: &String,
-    value: &String,
-  ) -> Result<(bool, String, String), String> {
-    if is_nested {
-      Self::process_nested_objects(is_modular, path, key, &value)
-    } else if is_children {
-      Self::process_children_objects(is_modular, path, key, value)
-    } else {
-      Self::process_property_value(is_modular, path, key, value)
-    }
+    Ok(("".to_string(), "".to_string()))
   }
 
   fn append_to_ast(_is_media: bool, _selector: &String, _key: &String, _style: String) -> bool {
@@ -569,33 +538,42 @@ impl Alchemist {
             if value.starts_with("{") && value.ends_with("}") {
               let mut nested_class_name_map: HashMap<String, String> = HashMap::new();
 
-              if let Ok((is_media, styles, _)) =
-                Self::processing_objects_by_type(is_modular, path, true, false, key, value)
+              if let Ok((is_media, selector, pseudo_selector, styles_map)) =
+                Self::process_nested_objects(key, &value)
               {
-                if !styles.is_empty() {
-                  let styles_map: Result<HashMap<String, HashMap<String, String>>, _> =
-                    from_str(&styles.as_str());
+                for data in styles_map.iter() {
+                  if data.len() > 0 && data.contains(":") {
+                    let props: Vec<String> =
+                      data.split(":").map(|k| k.trim().to_string()).collect();
 
-                  if let Ok(map) = styles_map {
-                    for (nested_k, data) in map.iter() {
-                      for (class_name, style) in data.iter() {
-                        let inserted =
-                          Self::append_to_ast(is_media, key, nested_k, style.to_string());
+                    let class_name = Self::generates_class_name(
+                      is_modular,
+                      path,
+                      false,
+                      &"".to_string(),
+                      &props[0],
+                      &props[1],
+                      &selector,
+                    );
 
-                        if inserted {
-                          nested_class_name_map
-                            .insert(nested_k.to_string(), class_name.to_string());
-                        }
-                      }
+                    let styles = format!(".{}{} {{ {} }}", class_name, pseudo_selector, data);
+                    let inserted =
+                      Self::append_to_ast(is_media, key, &props[0], styles.to_string());
+
+                    if inserted {
+                      nested_class_name_map
+                        .insert(props[0].trim().to_string(), class_name.to_string());
                     }
                   }
+                }
 
+                if styles_map.len() > 0 {
                   class_name_map.insert(key.to_string(), format!("{:?}", nested_class_name_map));
                 }
               }
             } else {
-              if let Ok((_, styles, class_name)) =
-                Self::processing_objects_by_type(is_modular, path, false, false, key, value)
+              if let Ok((styles, class_name)) =
+                Self::process_property_value(is_modular, path, key, value)
               {
                 if !styles.is_empty() {
                   let inserted = Self::append_to_ast(false, &"".to_string(), key, styles);
@@ -626,8 +604,8 @@ impl Alchemist {
 
           for (key, value) in v.iter() {
             if value.starts_with("{") && value.ends_with("}") {
-              if let Ok((_is_media, styles, _)) =
-                Self::processing_objects_by_type(is_modular, path, false, true, key, value)
+              if let Ok((_is_media, _selector, styles)) =
+                Self::process_children_objects(is_modular, path, key, value)
               {
                 if !styles.is_empty() {
                   /*Self::append_to_ast(
