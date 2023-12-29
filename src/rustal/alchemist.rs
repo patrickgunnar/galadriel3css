@@ -1,9 +1,11 @@
+use crate::ast::stylitron::STYLITRON;
 use crate::core::property_core::PROPERTY_CORE;
 use crate::core::screen_core::SCREEN_CORE;
 use crate::core::selector_core::SELECTOR_CORE;
 use crate::rustal::blueprint::Blueprint;
 use crate::rustal::classinator::classinator;
 
+use linked_hash_map::LinkedHashMap;
 use nom::{
   branch::alt,
   bytes::complete::{tag, take_until, take_while1},
@@ -255,14 +257,14 @@ impl Alchemist {
   ) -> Result<(bool, String, String), String> {
     let siblings = tags.join(sep);
 
-    let pseudo = if let Some(v) = SELECTOR_CORE.get(pseudo) {
+    let pseudo_sel = if let Some(v) = SELECTOR_CORE.get(pseudo) {
       v.to_string()
     } else {
       "".to_string()
     };
 
-    let media = if let Some(v) = SCREEN_CORE.get(media) {
-      v.to_string()
+    let media = if let Some(_) = SCREEN_CORE.get(media) {
+      media.to_string()
     } else {
       "".to_string()
     };
@@ -271,7 +273,7 @@ impl Alchemist {
     let styles = Self::styles_formatter(false, input, false);
 
     if !styles.is_empty() {
-      let css_cls = format!("{}{} {}", siblings, pseudo, styles);
+      let css_cls = format!("{}{} {}", siblings, pseudo_sel, styles);
 
       return Ok((is_media, media, css_cls));
     }
@@ -991,18 +993,14 @@ impl Alchemist {
     v: &HashMap<String, String>,
   ) -> HashMap<String, String> {
     let mut cls_map: HashMap<String, String> = HashMap::new();
-    let uniq_key = format!("targetChildren_{}", identifier);
-    let uniq_value = format!("{:#?}", v);
-    let uniqueness = format!("{}: {{ {}: {{ {} }} }}", identifier, uniq_key, uniq_value);
-
-    let cls_name = Self::generates_class_name(
-      is_modular,
-      path,
-      true,
-      &uniqueness,
-      &uniq_key,
-      &uniq_value,
-      &"".to_string(),
+    let cls_name = format!(
+      "children_{}{}",
+      identifier,
+      if is_modular {
+        Self::get_middle_x(4, &classinator(path))
+      } else {
+        "".to_string()
+      }
     );
 
     cls_map.insert("cls".to_string(), cls_name.clone());
@@ -1022,11 +1020,74 @@ impl Alchemist {
     cls_map
   }
 
-  fn append_to_ast(is_media: bool, selector: &String, key: &String, style: String) -> bool {
-    println!("is_media: {}, selector: {}", is_media, selector);
-    println!("key: {}, style: {}\n", key, style);
+  fn append_to_ast(is_media: bool, selector: &String, attr: &String, css_cls: String) -> bool {
+    let mut stylitron = STYLITRON.lock().unwrap();
+    let mut is_no_prop = false;
 
-    true
+    for (key, node) in stylitron.iter_mut() {
+      for (property, storage) in node.into_iter() {
+        if is_media && !selector.is_empty() {
+          if key == "mediaQueryVariables" {
+            if selector == property {
+              if !storage.contains(&css_cls) {
+                storage.push(css_cls.clone());
+
+                return true;
+              }
+
+              is_no_prop = true;
+            }
+          }
+        } else if !is_media && !selector.is_empty() && attr != "targetChildren" {
+          if key == "pseudoSelectors" {
+            if selector == property {
+              if !storage.contains(&css_cls) {
+                storage.push(css_cls.clone());
+
+                return true;
+              }
+
+              is_no_prop = true;
+            }
+          }
+        } else if attr == "targetChildren" {
+          if key == "targetChildren" {
+            if property == "children" {
+              if !storage.contains(&css_cls) {
+                storage.push(css_cls.clone());
+
+                return true;
+              }
+
+              is_no_prop = true;
+            }
+          }
+        } else if !is_media && selector.is_empty() {
+          if property == attr {
+            if !storage.contains(&css_cls) {
+              storage.push(css_cls.clone());
+
+              return true;
+            }
+
+            is_no_prop = true;
+          }
+        }
+      }
+    }
+
+    if !is_media && !is_no_prop {
+      stylitron
+        .entry("otherProperties".to_string())
+        .or_insert_with(|| LinkedHashMap::new())
+        .entry(attr.to_string())
+        .or_insert_with(|| Vec::new())
+        .push(css_cls.clone());
+
+      return true;
+    }
+
+    false
   }
 
   pub fn process_objects(
