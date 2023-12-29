@@ -3,6 +3,10 @@
 #[macro_use]
 extern crate napi_derive;
 
+pub mod ast {
+  pub mod stylitron;
+}
+
 pub mod core {
   pub mod nucleus;
   pub mod property_core;
@@ -21,6 +25,7 @@ pub mod rustal {
   pub mod file_reader;
 }
 
+use ast::stylitron::STYLITRON;
 use rustal::alchemist::Alchemist;
 use rustal::codelyzer::Codelyzer;
 use rustal::configatron::{configatron_init, Configatron};
@@ -46,7 +51,8 @@ pub fn process_path(path: String) {
 
     let alchemist = Alchemist::new(modular);
     let create_styles_map = alchemist.process_objects(path.as_str(), map);
-
+    
+    println!("{:#?}", STYLITRON.lock().unwrap());
     println!("{:#?}", create_styles_map);
   }
 }
