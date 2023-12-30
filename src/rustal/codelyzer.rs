@@ -1,5 +1,4 @@
 use crate::rustal::blueprint::Blueprint;
-use crate::rustal::file_reader::file_reader;
 
 use nom::{
   branch::alt,
@@ -22,26 +21,8 @@ pub struct Codelyzer {
   - collects the objects from the the createStyles' callback handler
 */
 impl Codelyzer {
-  pub fn new(path: &str) -> Self {
-    let blueprint = Blueprint::new();
-    // reads the file from the path
-    let file_content = file_reader(path);
-
-    match file_content {
-      // if the file is read successfully
-      // set the code property values to the file's content
-      Ok(content) => Codelyzer { code: content },
-      // if any errors are encountered
-      // print some error messages and set the code to an empty string
-      Err(_) => {
-        blueprint.error("something went wrong whiling processing a file".to_string());
-        blueprint.info(format!("path not processed: {}", path).to_string());
-
-        Codelyzer {
-          code: "".to_string(),
-        }
-      }
-    }
+  pub fn new(code: String) -> Self {
+    Codelyzer { code }
   }
 
   // removes the break lines or tab from the string
@@ -451,12 +432,15 @@ impl Codelyzer {
             None => {
               let blueprint = Blueprint::new();
 
-              blueprint.warn(blueprint.bold("the 'createStyles' function was not processed".to_string()));
-              blueprint.warn("missing the 'identifier' property in the callback of 'createStyles'".to_string());
+              blueprint
+                .warn(blueprint.bold("the 'createStyles' function was not processed".to_string()));
+              blueprint.warn(
+                "missing the 'identifier' property in the callback of 'createStyles'".to_string(),
+              );
               blueprint.info("add the 'identifier' property to the return object of the callback in 'createStyles'".to_string());
 
               "".to_string()
-            },
+            }
           };
 
           // if there is no identifier as property of the callback's return object
