@@ -1,4 +1,5 @@
 use crate::ast::stylitron::STYLITRON;
+use crate::core::nucleus::STYLOMETRIC;
 use crate::core::property_core::PROPERTY_CORE;
 use crate::core::screen_core::SCREEN_CORE;
 use crate::core::selector_core::SELECTOR_CORE;
@@ -1173,16 +1174,10 @@ impl Alchemist {
     let formatted_styles =
       Self::styles_formatter(false, &format!("{{ {:?}:{:?} }}", key, value), true);
 
-      // Check if the formatted styles are not empty
+    // Check if the formatted styles are not empty
     if formatted_styles.len() > 0 {
       // Generate a class name using generates_class_name function
-      let cls_name = Self::generates_class_name(
-        is_modular,
-        path,
-        key,
-        value,
-        &"".to_string(),
-      );
+      let cls_name = Self::generates_class_name(is_modular, path, key, value, &"".to_string());
 
       // Construct the CSS class string
       let css_cls = format!(".{} {}", cls_name, formatted_styles);
@@ -1266,13 +1261,7 @@ impl Alchemist {
     key: &String,
   ) -> Result<(bool, String), String> {
     // Generate a class name using generates_class_name function
-    let cls_name = Self::generates_class_name(
-      is_modular,
-      path,
-      property,
-      value,
-      selector,
-    );
+    let cls_name = Self::generates_class_name(is_modular, path, property, value, selector);
 
     // Construct the CSS class string
     let css_cls = format!(".{}{} {{ {} }}", cls_name, pseudo, rule);
@@ -1460,27 +1449,10 @@ impl Alchemist {
   // - identifier: String representing an identifier for the children objects.
   // - v: HashMap containing children objects and their associated CSS class names.
   // Returns: HashMap containing the processed CSS class map for the children objects.
-  fn trigger_children_objects_process(
-    is_modular: bool,
-    path: &str,
-    identifier: &String,
-    v: &HashMap<String, String>,
-  ) -> HashMap<String, String> {
-    // Initialize a HashMap to store the processed CSS class map for the children objects
-    let mut cls_map: HashMap<String, String> = HashMap::new();
-    // Generate a unique CSS class name for the children objects
-    let cls_name = format!(
-      "children_{}{}",
-      identifier,
-      if is_modular {
-        Self::get_middle_x(4, &classinator(path))
-      } else {
-        "".to_string()
-      }
-    );
-
-    // Insert the CSS class name into the cls_map
-    cls_map.insert("cls".to_string(), cls_name.clone());
+  fn trigger_children_objects_process(cls_name: String, v: &HashMap<String, String>) -> bool {
+    // variable to control the state of the children
+    // weather the style were appended into the ast or not
+    let mut is_children_in_ast = false;
 
     // Iterate over the children objects (key-value pairs) in the HashMap
     for (key, value) in v.iter() {
@@ -1494,14 +1466,22 @@ impl Alchemist {
             let cls = format!(".{} {}", cls_name, css_cls);
 
             // Append the style rule to the Abstract Syntax Tree (AST)
-            Self::append_to_ast(is_media, &selector, &"targetChildren".to_string(), cls);
+            let is_in_ast =
+              Self::append_to_ast(is_media, &selector, &"targetChildren".to_string(), cls);
+
+            // if the styles were successfully appended into the AST
+            // and if the control variable is still false
+            if is_in_ast && !is_children_in_ast {
+              // sets the control variable to true
+              is_children_in_ast = true;
+            }
           }
         }
       }
     }
 
-    // Return the processed CSS class map for the children objects
-    cls_map
+    // returns a bool value
+    is_children_in_ast
   }
 
   // Function to append a style rule to the Abstract Syntax Tree (AST).
@@ -1604,6 +1584,41 @@ impl Alchemist {
     false
   }
 
+  // Function to append styles to the global stylometric data structure.
+  // Parameters:
+  // - map: A hashmap containing styles organized by identifier, key, and nested key.
+  fn append_to_stylometric(map: &HashMap<String, HashMap<String, HashMap<String, String>>>) {
+    // Acquire a lock on the global STYLOMETRIC data structure
+    let mut stylometric = STYLOMETRIC.lock().unwrap();
+
+    // Iterate over each identifier and its corresponding data in the input map
+    for (identifier, data) in map.iter() {
+      // Retrieve or insert an entry for the current identifier in the stylometric data structure
+      let get_identifier = stylometric
+        .entry(identifier.to_string())
+        .or_insert_with(|| HashMap::new());
+
+      // Iterate over each key and its corresponding value in the data associated with the identifier
+      for (key, value) in data.iter() {
+        // Retrieve or insert an entry for the current key in the identifier's data
+        let get_key = get_identifier
+          .entry(key.to_string())
+          .or_insert_with(|| HashMap::new());
+
+        // Iterate over each nested key and its corresponding value in the data associated with the key
+        for (nested_key, nested_value) in value.iter() {
+          // Retrieve or insert an entry for the current nested key in the key's data
+          let nested_key_value = get_key
+            .entry(nested_key.to_string())
+            .or_insert_with(|| String::new());
+
+          // Update the value associated with the nested key in the key's data
+          *nested_key_value = nested_value.to_string();
+        }
+      }
+    }
+  }
+
   // Public method to process a nested structure of style objects.
   // Parameters:
   // - self: A reference to the current instance of the struct.
@@ -1614,7 +1629,7 @@ impl Alchemist {
     &self,
     path: &str,
     input: HashMap<String, HashMap<String, HashMap<String, String>>>,
-  ) -> HashMap<String, HashMap<String, HashMap<String, String>>> {
+  ) {
     // Extract whether the styling is modular from the struct
     let is_modular = self.modular;
     // Initialize an empty HashMap to store the processed style objects - (class names object).
@@ -1661,10 +1676,29 @@ impl Alchemist {
           }
           // Check if the property is "children"
         } else if k == "children" {
+          // Initialize a HashMap to store the processed CSS class map for the children objects
+          let mut cls_map: HashMap<String, String> = HashMap::new();
+          // Generate a unique CSS class name for the children objects
+          let cls_name = format!(
+            "children_{}{}",
+            identifier,
+            if is_modular {
+              Self::get_middle_x(4, &classinator(path))
+            } else {
+              "".to_string()
+            }
+          );
+
           // Trigger the processing of children objects and obtain the class map
-          let cls_map = Self::trigger_children_objects_process(is_modular, path, identifier, v);
-          // Insert the class map into the objects_map with the key "targetChildren"
-          objects_map.insert("targetChildren".to_string(), cls_map);
+          let is_in_ast = Self::trigger_children_objects_process(cls_name.clone(), v);
+
+          // if the children styles were appended into the AST
+          if is_in_ast {
+            // Insert the CSS class name into the cls_map
+            cls_map.insert("cls".to_string(), cls_name);
+            // Insert the class map into the objects_map with the key "targetChildren"
+            objects_map.insert("targetChildren".to_string(), cls_map);
+          }
         }
       }
 
@@ -1672,7 +1706,7 @@ impl Alchemist {
       create_styles_map.insert(identifier.to_string(), objects_map);
     }
 
-    // Return the final processed style objects - (class names object).
-    create_styles_map
+    // insert the CSS class name into the stylometric constant
+    Self::append_to_stylometric(&create_styles_map);
   }
 }
