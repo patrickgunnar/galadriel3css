@@ -1,7 +1,6 @@
-use crate::rustal::blueprint::Blueprint;
-use crate::rustal::file_reader::file_reader;
 use crate::core::nucleus::NUCLEUS_CONFIG;
-
+use crate::rustal::blueprint::Blueprint;
+use crate::rustal::readify::readify;
 #[napi(js_name = "Configatron")]
 pub struct Configatron {
   config: std::collections::HashMap<String, serde_json::Value>,
@@ -13,13 +12,17 @@ pub struct Configatron {
 #[napi]
 impl Configatron {
   #[napi(constructor)]
-  pub fn new() -> Self {// sets the config with the galadriel.json configuration on memory
+  pub fn new() -> Self {
+    // sets the config with the galadriel.json configuration on memory
     Configatron {
       config: NUCLEUS_CONFIG.lock().unwrap().clone(),
     }
   }
 
-  fn collects_configurations(&self, keys: Vec<&str>) -> std::collections::HashMap<String, serde_json::Value> {
+  fn collects_configurations(
+    &self,
+    keys: Vec<&str>,
+  ) -> std::collections::HashMap<String, serde_json::Value> {
     // instantiate a map to store the config to be collected
     let mut collected_config: std::collections::HashMap<String, serde_json::Value> =
       std::collections::HashMap::new();
@@ -30,7 +33,8 @@ impl Configatron {
       if let Some(value) = self.config.get(&k.to_string()) {
         // sets the keys values in the map
         collected_config.insert(k.to_string(), value.clone());
-      } else { // if the current key is not valid, sets it to null in the map
+      } else {
+        // if the current key is not valid, sets it to null in the map
         collected_config.insert(k.to_string(), serde_json::Value::Null);
       }
     }
@@ -39,7 +43,10 @@ impl Configatron {
   }
 
   // collects the configuration from rust code
-  pub fn collects_from_rust(&self, keys: Vec<&str>) -> std::collections::HashMap<String, serde_json::Value> {
+  pub fn collects_from_rust(
+    &self,
+    keys: Vec<&str>,
+  ) -> std::collections::HashMap<String, serde_json::Value> {
     // returns the collected configurations
     self.collects_configurations(keys)
   }
@@ -63,46 +70,36 @@ impl Configatron {
 // the configuration's init to starts configuration collection
 pub fn configatron_init() -> std::collections::HashMap<String, serde_json::Value> {
   let blueprint = Blueprint::new();
-  // initiates a map to hold the configs from the json file 
+  // initiates a map to hold the configs from the json file
   let mut map = std::collections::HashMap::new();
   // gets the current dir of the application
   let current_dir = std::env::current_dir().expect("Failed to get current directory");
   // generates a path to the galadriel.json file
   let path = current_dir.join("galadriel.json");
-  // reads the file content
-  let file_content = file_reader(&path.to_string_lossy());
 
-  match file_content {
-    // if the configuration was successfully collected
-    // receives the string content - json alike
-    Ok(content) => {
-      // parsers the json string
-      let json_data: Result<serde_json::Value, _> = serde_json::from_str(&content);
-
-      match json_data {
-        Ok(objects) => { // if thee json was successfully parsed
-          // extracts the parsed objects
-          if let Some(obj) = objects.as_object() {
-            // loops over the objects, extracting the keys and values
-            for (key, value) in obj.iter() {
-              // inserts the key - value pairs into the map
-              map.insert(key.to_string(), value.clone());
-            }
-          }
-        }
-        Err(_) => { // prints to the console some error messages
-          blueprint.error("the data in 'galadriel.json' cannot be transformed".to_string());
-          blueprint.info("verify the data in 'galadriel.json' and try again!".to_string());
+  if let Ok(code) = readify(&path.to_string_lossy()) {
+    if let Ok(json) = serde_json::from_str(&code) as Result<serde_json::Value, _> {
+      // if thee json was successfully parsed
+      // extracts the parsed objects
+      if let Some(obj) = json.as_object() {
+        // loops over the objects, extracting the keys and values
+        for (key, value) in obj.iter() {
+          // inserts the key - value pairs into the map
+          map.insert(key.to_string(), value.clone());
         }
       }
+    } else {
+      // prints to the console some error messages
+      blueprint.error("the data in 'galadriel.json' cannot be transformed".to_string());
+      blueprint.info("verify the data in 'galadriel.json' and try again!".to_string());
     }
-    Err(_) => { // prints to the console some error messages
-      blueprint.error("the data from 'galadriel.json' was not read".to_string());
-      blueprint.info("verify if the 'galadriel.json' is in root directory".to_string());
-    }
+  } else {
+    // prints to the console some error messages
+    blueprint.error("the data from 'galadriel.json' was not read".to_string());
+    blueprint.info("verify if the 'galadriel.json' is in root directory".to_string());
   }
 
-  // returns the map containing the 
+  // returns the map containing the
   // configurations from the galadriel.json file
   map
 }
