@@ -7,7 +7,7 @@ pub mod ast {
   pub mod stylitron;
 }
 
-//use ast::stylitron::STYLITRON;
+use ast::stylitron::STYLITRON;
 
 pub mod core {
   pub mod nucleus;
@@ -17,7 +17,7 @@ pub mod core {
 }
 
 use core::nucleus::NUCLEUS_CONFIG;
-//use core::nucleus::STYLOMETRIC;
+use core::nucleus::STYLOMETRIC;
 
 pub mod rustal {
   pub mod alchemist;
@@ -26,6 +26,7 @@ pub mod rustal {
   pub mod codelyzer;
   pub mod configatron;
   pub mod gatekeeper;
+  pub mod intaker;
   pub mod readify;
 }
 
@@ -33,9 +34,11 @@ use rustal::alchemist::Alchemist;
 use rustal::blueprint::Blueprint;
 use rustal::codelyzer::Codelyzer;
 use rustal::configatron::{configatron_init, Configatron};
-use rustal::readify::readify;
 use rustal::gatekeeper::Gatekeeper;
+use rustal::intaker::Intaker;
+use rustal::readify::readify;
 
+use ignore::WalkBuilder;
 use serde_json::Value;
 
 #[napi]
@@ -62,13 +65,46 @@ pub fn process_path(path: String) {
 
       alchemist.process_objects(path.as_str(), map);
 
-      let _gatekeeper = Gatekeeper::new(modular, path, code);
-
-      //println!("{:#?}", STYLITRON.lock().unwrap());
-      //println!("{:#?}", STYLOMETRIC.lock().unwrap());
+      if modular {
+        // IF MODULAR, GENERATES THE CSS AND JS FILES.
+        // IF NOT MODULAR, GENERATES THE CSS AND JS FILES ON THE process_gatekeeper
+      }
     }
   } else {
     blueprint.error("something went wrong whiling processing a file".to_string());
     blueprint.info(format!("path not processed: {}", path).to_string());
   }
+}
+
+#[napi]
+pub fn process_gatekeeper() {
+  let mut gatekeeper = Gatekeeper::new();
+  let paths: Vec<_> = WalkBuilder::new(".")
+    .build()
+    .filter_map(Result::ok)
+    .filter(|entry| {
+      entry.file_type().map_or(false, |t| t.is_file())
+        && entry.path().extension().map_or(false, |ext| {
+          ext == "js" || ext == "jsx" || ext == "ts" || ext == "tsx"
+        })
+    })
+    .map(|entry| entry.into_path())
+    .collect();
+
+  for path in paths.into_iter() {
+    if let Ok(code) = readify(&path.to_string_lossy()) {
+      if code.contains("createStyles") {
+        let intaker = Intaker::new();
+        let imports = intaker.process_code(code);
+
+        for import in imports.iter() {
+          gatekeeper.add_import(&path.to_string_lossy(), import);
+        }
+      }
+    }
+  }
+
+  gatekeeper.print_graph();
+
+  // GENERATES THE CSS FILE AND JS FILE CONTAINING THE CLASS NAMES ON GLOBAL CONFIGURATION IN HERE.
 }
