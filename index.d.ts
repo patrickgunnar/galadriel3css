@@ -5,6 +5,7 @@
 
 export function configatronInitializer(): void
 export function processPath(path: string): void
+export function processGatekeeper(): void
 export class Blueprint {
   constructor()
   useCurrentTime(): string
