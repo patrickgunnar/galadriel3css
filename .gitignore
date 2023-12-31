@@ -183,6 +183,7 @@ $RECYCLE.BIN/
 
 #Added by cargo
 
+/temp
 /target
 Cargo.lock
 
