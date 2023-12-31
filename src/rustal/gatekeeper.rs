@@ -11,13 +11,21 @@ impl Gatekeeper {
     }
   }
 
-  fn add_module(&mut self, module_name: &str) -> NodeIndex {
-    self.graph.add_node(module_name.to_string())
+  fn find_or_add_module(&mut self, module_name: &str) -> NodeIndex {
+    if let Some(node) = self
+      .graph
+      .node_indices()
+      .find(|&node| self.graph[node] == module_name)
+    {
+      node
+    } else {
+      self.graph.add_node(module_name.to_string())
+    }
   }
 
   pub fn add_import(&mut self, from_module: &str, to_module: &str) {
-    let from_node = self.add_module(from_module);
-    let to_node = self.add_module(to_module);
+    let from_node = self.find_or_add_module(from_module);
+    let to_node = self.find_or_add_module(to_module);
 
     self.graph.add_edge(from_node, to_node, ());
   }
@@ -30,5 +38,7 @@ impl Gatekeeper {
         println!("  ---> Imports: {:?}", neighbor);
       }
     }
+
+    println!("{:#?}", self.graph);
   }
 }
