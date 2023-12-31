@@ -27,6 +27,7 @@ pub mod rustal {
   pub mod configatron;
   pub mod gatekeeper;
   pub mod intaker;
+  pub mod pathify;
   pub mod readify;
 }
 
@@ -36,6 +37,7 @@ use rustal::codelyzer::Codelyzer;
 use rustal::configatron::{configatron_init, Configatron};
 use rustal::gatekeeper::Gatekeeper;
 use rustal::intaker::Intaker;
+use rustal::pathify::pathify;
 use rustal::readify::readify;
 
 use ignore::WalkBuilder;
@@ -94,11 +96,21 @@ pub fn process_gatekeeper() {
   for path in paths.into_iter() {
     if let Ok(code) = readify(&path.to_string_lossy()) {
       if code.contains("createStyles") {
-        let intaker = Intaker::new();
-        let imports = intaker.process_code(code);
+        let path_string = path.to_string_lossy().to_string();
+        let parts: Vec<&str> = path_string
+          .split(".")
+          .filter(|entry| !entry.is_empty())
+          .collect();
 
-        for import in imports.iter() {
-          gatekeeper.add_import(&path.to_string_lossy(), import);
+        if let Some(path_str) = parts.first() {
+          let intaker = Intaker::new();
+          let imports = intaker.process_code(code);
+
+          for import in imports.iter() {
+            let formatted_import = pathify(&path_string, import);
+
+            gatekeeper.add_import(path_str, &formatted_import);
+          }
         }
       }
     }
