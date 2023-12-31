@@ -35,7 +35,7 @@ impl Gatekeeper {
 
   // Group paths in the graph using Depth-First Search (DFS).
   // Returns a vector of vectors, where each inner vector represents a connected component.
-  pub fn group_paths(&self) -> Vec<Vec<String>> {
+  pub fn group_paths(&self, processed_paths: &Vec<String>) -> Vec<Vec<String>> {
     // Create a vector to track visited nodes.
     let mut visited = vec![false; self.graph.node_count()];
     // Create a vector to store groups of connected components.
@@ -50,8 +50,14 @@ impl Gatekeeper {
 
         // Perform DFS on the current node to explore the connected component.
         self.dfs(node, &mut visited, &mut group);
-        // Add the connected component to the list of groups.
-        groups.push(group);
+        // keep only the paths that are in the processed array (that makes use of createStyles).
+        group.retain(|path| processed_paths.contains(&path));
+
+        // if the group is not empty
+        if !group.is_empty() {
+          // Add the connected component to the list of groups.
+          groups.push(group);
+        }
       }
     }
 

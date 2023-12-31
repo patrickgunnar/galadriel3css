@@ -80,6 +80,7 @@ pub fn process_path(path: String) {
 
 #[napi]
 pub fn process_gatekeeper() {
+  let mut processed_paths: Vec<String> = vec![];
   let mut gatekeeper = Gatekeeper::new();
   let paths: Vec<_> = WalkBuilder::new(".")
     .build()
@@ -103,6 +104,10 @@ pub fn process_gatekeeper() {
           .collect();
 
         if let Some(path_str) = parts.first() {
+          if !processed_paths.contains(&path_str.to_string()) {
+            processed_paths.push(path_str.to_string());
+          }
+
           let intaker = Intaker::new();
           let imports = intaker.process_code(code);
 
@@ -117,7 +122,7 @@ pub fn process_gatekeeper() {
   }
 
   //gatekeeper.print_graph();
-  let groups = gatekeeper.group_paths();
+  let groups = gatekeeper.group_paths(&processed_paths);
   println!("{:#?}", groups);
 
   // GENERATES THE CSS FILE AND JS FILE CONTAINING THE CLASS NAMES ON GLOBAL CONFIGURATION IN HERE.
