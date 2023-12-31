@@ -1,5 +1,5 @@
 const chokidar = require("chokidar");
-const { processPath, Blueprint, Configatron } = require("../../../index");
+const { processPath, Blueprint, Configatron, processGatekeeper } = require("../../../index");
 
 function watcherInit() {
     const blueprint = new Blueprint();
@@ -28,6 +28,7 @@ function watcherInit() {
             watcher.close();
         } else {
             processPath(path);
+            processGatekeeper();
         }
     });
 }

@@ -1,5 +1,5 @@
 const { glob } = require("glob");
-const { processPath, configatronInitializer, Blueprint, Configatron } = require("../../../index");
+const { processPath, configatronInitializer, Blueprint, Configatron, processGatekeeper } = require("../../../index");
 
 async function builderInit() {
     configatronInitializer();
@@ -22,6 +22,8 @@ async function builderInit() {
     files.forEach((file) => {
         processPath(file);
     });
+
+    processGatekeeper();
 
     blueprint.info("the build environment just finished");
 }
