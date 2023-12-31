@@ -7,10 +7,10 @@
   "types": "index.d.ts",
   "bin": {
     "galadriel": "src/cli.js",
-    "galadriel3css": "src/cli.js",
-    "galadrielcss": "src/cli.js",
     "galadriel3CSS": "src/cli.js",
-    "galadrielCSS": "src/cli.js"
+    "galadriel3css": "src/cli.js",
+    "galadrielCSS": "src/cli.js",
+    "galadrielcss": "src/cli.js"
   },
   "napi": {
     "name": "galadriel3css",
