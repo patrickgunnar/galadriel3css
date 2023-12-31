@@ -7,7 +7,7 @@ pub mod ast {
   pub mod stylitron;
 }
 
-use ast::stylitron::STYLITRON;
+//use ast::stylitron::STYLITRON;
 
 pub mod core {
   pub mod nucleus;
@@ -17,7 +17,7 @@ pub mod core {
 }
 
 use core::nucleus::NUCLEUS_CONFIG;
-use core::nucleus::STYLOMETRIC;
+//use core::nucleus::STYLOMETRIC;
 
 pub mod rustal {
   pub mod alchemist;
@@ -116,7 +116,10 @@ pub fn process_gatekeeper() {
     }
   }
 
-  gatekeeper.print_graph();
+  //gatekeeper.print_graph();
+  let groups = gatekeeper.group_paths();
+  println!("{:#?}", groups);
 
   // GENERATES THE CSS FILE AND JS FILE CONTAINING THE CLASS NAMES ON GLOBAL CONFIGURATION IN HERE.
+  // GENERATED THE INITIAL JS FILE CONTAINING THE GROUPS.
 }
