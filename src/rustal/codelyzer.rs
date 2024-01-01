@@ -115,6 +115,15 @@ impl Codelyzer {
     delimited(tag("//"), take_until("\n"), tag("\n"))(input)
   }
 
+  // identifies the imports from the string
+  fn identifier_imports(input: &str) -> ParserResult<&str> {
+    alt((
+      delimited(tag("import"), take_until(";"), tag(";")),
+      delimited(tag("import"), take_until("\n"), tag("\n")),
+      delimited(tag("import"), take_until(" "), tag(" ")),
+    ))(input)
+  }
+
   // process the string to remove non-objects content from
   // the createStyles' callback handler and collects the
   // key/value pairs inside from it
@@ -395,6 +404,7 @@ impl Codelyzer {
   // process the content from the script string
   fn process_tokens(input: &str) -> ParserResult<&str> {
     alt((
+      Self::identifier_imports,
       Self::clear_space,
       Self::escape_char,
       Self::clear_special,
