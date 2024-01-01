@@ -1290,9 +1290,9 @@ impl Alchemist {
     selector: String,
     pseudo: String,
     styles_map: Vec<String>,
-  ) -> HashMap<String, String> {
+  ) -> HashMap<String, HashMap<String, String>> {
     // Initialize a HashMap to store the processed nested styles
-    let mut intern_objects_map: HashMap<String, String> = HashMap::new();
+    let mut intern_objects_map: HashMap<String, HashMap<String, String>> = HashMap::new();
 
     // Iterate over the styles_map
     for value_str in styles_map.iter() {
@@ -1356,7 +1356,7 @@ impl Alchemist {
 
         // If there are values in intern_value_map, insert into intern_objects_map
         if intern_value_map.len() > 0 {
-          intern_objects_map.insert(prop_key.to_string(), format!("{:?}", intern_value_map));
+          intern_objects_map.insert(prop_key.to_string(), intern_value_map);
         }
       }
     }
@@ -1406,9 +1406,9 @@ impl Alchemist {
     path: &str,
     key: &String,
     value: &String,
-  ) -> HashMap<String, String> {
+  ) -> HashMap<String, HashMap<String, String>> {
     // Initialize a HashMap to store the processed property values and associated CSS class names
-    let mut intern_value_map: HashMap<String, String> = HashMap::new();
+    let mut intern_value_map: HashMap<String, HashMap<String, String>> = HashMap::new();
 
     // Check if the value contains a ternary operation
     if value.contains("${") && value.contains("}") {
@@ -1422,7 +1422,10 @@ impl Alchemist {
           {
             // If the append is successful, insert into the intern_value_map
             if is_in_ast {
-              intern_value_map.insert(ternary_v.to_string(), cls_name);
+              let mut name_map: HashMap<String, String> = HashMap::new();
+
+              name_map.insert("name".to_string(), cls_name);
+              intern_value_map.insert(ternary_v.to_string(), name_map);
             }
           }
         }
@@ -1434,7 +1437,10 @@ impl Alchemist {
       {
         // If the append is successful, insert into the intern_value_map
         if is_in_ast {
-          intern_value_map.insert(value.to_string(), cls_name);
+          let mut name_map: HashMap<String, String> = HashMap::new();
+
+          name_map.insert("name".to_string(), cls_name);
+          intern_value_map.insert(value.to_string(), name_map);
         }
       }
     }
@@ -1587,7 +1593,9 @@ impl Alchemist {
   // Function to append styles to the global stylometric data structure.
   // Parameters:
   // - map: A hashmap containing styles organized by identifier, key, and nested key.
-  fn append_to_stylometric(map: &HashMap<String, HashMap<String, HashMap<String, String>>>) {
+  fn append_to_stylometric(
+    map: &HashMap<String, HashMap<String, HashMap<String, HashMap<String, String>>>>,
+  ) {
     // Acquire a lock on the global STYLOMETRIC data structure
     let mut stylometric = STYLOMETRIC.lock().unwrap();
 
@@ -1610,10 +1618,15 @@ impl Alchemist {
           // Retrieve or insert an entry for the current nested key in the key's data
           let nested_key_value = get_key
             .entry(nested_key.to_string())
-            .or_insert_with(|| String::new());
+            .or_insert_with(|| HashMap::new());
 
-          // Update the value associated with the nested key in the key's data
-          *nested_key_value = nested_value.to_string();
+          for (k, v) in nested_value.iter() {
+            let k_v = nested_key_value
+              .entry(k.to_string())
+              .or_insert_with(|| String::new());
+
+            *k_v = v.to_string();
+          }
         }
       }
     }
@@ -1633,13 +1646,16 @@ impl Alchemist {
     // Extract whether the styling is modular from the struct
     let is_modular = self.modular;
     // Initialize an empty HashMap to store the processed style objects - (class names object).
-    let mut create_styles_map: HashMap<String, HashMap<String, HashMap<String, String>>> =
-      HashMap::new();
+    let mut create_styles_map: HashMap<
+      String,
+      HashMap<String, HashMap<String, HashMap<String, String>>>,
+    > = HashMap::new();
 
     // Iterate over the input style objects
     for (identifier, val) in input.iter() {
       // Initialize an empty HashMap to store the processed style properties for each identifier - (class names of the styles).
-      let mut objects_map: HashMap<String, HashMap<String, String>> = HashMap::new();
+      let mut objects_map: HashMap<String, HashMap<String, HashMap<String, String>>> =
+        HashMap::new();
 
       // Iterate over the properties of each identifier
       for (k, v) in val.iter() {
@@ -1677,7 +1693,8 @@ impl Alchemist {
           // Check if the property is "children"
         } else if k == "children" {
           // Initialize a HashMap to store the processed CSS class map for the children objects
-          let mut cls_map: HashMap<String, String> = HashMap::new();
+          let mut cls_map: HashMap<String, HashMap<String, String>> = HashMap::new();
+          let mut name_map: HashMap<String, String> = HashMap::new();
           // Generate a unique CSS class name for the children objects
           let cls_name = format!(
             "children_{}{}",
@@ -1694,8 +1711,9 @@ impl Alchemist {
 
           // if the children styles were appended into the AST
           if is_in_ast {
+            name_map.insert("name".to_string(), cls_name);
             // Insert the CSS class name into the cls_map
-            cls_map.insert("cls".to_string(), cls_name);
+            cls_map.insert("cls".to_string(), name_map);
             // Insert the class map into the objects_map with the key "targetChildren"
             objects_map.insert("targetChildren".to_string(), cls_map);
           }
