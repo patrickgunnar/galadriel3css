@@ -202,7 +202,7 @@ impl Alchemist {
               // Check if the value contains variables or should include ternary expressions
               if !value.contains("${") && !value.contains("}") || incl_ternary {
                 // Add the formatted style entry to the vector
-                map.push(format!("{}: {}", property, value));
+                map.push(format!("{}:{}", property, value));
               }
             }
           }
@@ -213,7 +213,7 @@ impl Alchemist {
 
     // Format the final styles string based on conditions
     if map.len() > 0 && !is_nested {
-      format!("{{ {} }}", map.join("; "))
+      format!("{{{}}}", map.join(";"))
     } else if is_nested {
       format!("{:?}", map)
     } else {
@@ -353,7 +353,7 @@ impl Alchemist {
 
     // Check if styles are not empty and construct the CSS class string
     if !styles.is_empty() {
-      let css_cls = format!("{}{} {}", siblings, pseudo_sel, styles);
+      let css_cls = format!("{}{}{}", siblings, pseudo_sel, styles);
 
       // Return the result as a tuple in a Result
       return Ok((is_media, media, css_cls));
@@ -392,7 +392,7 @@ impl Alchemist {
 
     // Check if styles are not empty and construct the CSS class string
     if !styles.is_empty() {
-      let css_cls = format!("{}:{} {}", tag, pseudo, styles);
+      let css_cls = format!("{}:{}{}", tag, pseudo, styles);
 
       // Return the result as a tuple in a Result
       return Ok((is_media, media, css_cls));
@@ -483,7 +483,7 @@ impl Alchemist {
 
     // Check if styles are not empty and construct the CSS class string
     if !styles.is_empty() {
-      let css_cls = format!("{}:{}({}) {}", tag, pseudo, attr, styles);
+      let css_cls = format!("{}:{}({}){}", tag, pseudo, attr, styles);
 
       // Return the result as a tuple in a Result
       return Ok((is_media, media, css_cls));
@@ -1172,7 +1172,7 @@ impl Alchemist {
   ) -> Result<(String, String), String> {
     // Format the styles using the styles_formatter function
     let formatted_styles =
-      Self::styles_formatter(false, &format!("{{ {:?}:{:?} }}", key, value), true);
+      Self::styles_formatter(false, &format!("{{{:?}:{:?}}}", key, value), true);
 
     // Check if the formatted styles are not empty
     if formatted_styles.len() > 0 {
@@ -1180,7 +1180,7 @@ impl Alchemist {
       let cls_name = Self::generates_class_name(is_modular, path, key, value, &"".to_string());
 
       // Construct the CSS class string
-      let css_cls = format!(".{} {}", cls_name, formatted_styles);
+      let css_cls = format!(".{}{}", cls_name, formatted_styles);
 
       // Return the result as a tuple in a Result
       return Ok((css_cls, cls_name));
@@ -1264,7 +1264,7 @@ impl Alchemist {
     let cls_name = Self::generates_class_name(is_modular, path, property, value, selector);
 
     // Construct the CSS class string
-    let css_cls = format!(".{}{} {{ {} }}", cls_name, pseudo, rule);
+    let css_cls = format!(".{}{}{{{}}}", cls_name, pseudo, rule);
     // Append the style rule to the Abstract Syntax Tree (AST)
     let is_in_ast = Self::append_to_ast(is_media, key, property, css_cls);
 
@@ -1313,7 +1313,7 @@ impl Alchemist {
             // Iterate over the ternary values
             for ternary_v in &[first_value, second_value] {
               // Construct the rule for the property-value pair
-              let rule = format!("{}: {}", prop_key, ternary_v);
+              let rule = format!("{}:{}", prop_key, ternary_v);
 
               // Trigger the append of nested styles
               if let Ok((is_in_ast, cls_name)) = Self::trigger_append_of_nested(
@@ -1463,7 +1463,7 @@ impl Alchemist {
           // Check if the generated CSS class is not empty
           if !css_cls.is_empty() {
             // Construct the complete CSS rule with the generated CSS class
-            let cls = format!(".{} {}", cls_name, css_cls);
+            let cls = format!(".{}{}", cls_name, css_cls);
 
             // Append the style rule to the Abstract Syntax Tree (AST)
             let is_in_ast =
