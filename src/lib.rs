@@ -7,8 +7,6 @@ pub mod ast {
   pub mod stylitron;
 }
 
-//use ast::stylitron::STYLITRON;
-
 pub mod core {
   pub mod nucleus;
   pub mod property_core;
@@ -17,7 +15,6 @@ pub mod core {
 }
 
 use core::nucleus::NUCLEUS_CONFIG;
-//use core::nucleus::STYLOMETRIC;
 
 pub mod rustal {
   pub mod alchemist;
@@ -29,6 +26,7 @@ pub mod rustal {
   pub mod intaker;
   pub mod pathify;
   pub mod readify;
+  pub mod trailblazer;
 }
 
 use rustal::alchemist::Alchemist;
@@ -39,6 +37,7 @@ use rustal::gatekeeper::Gatekeeper;
 use rustal::intaker::Intaker;
 use rustal::pathify::pathify;
 use rustal::readify::readify;
+use rustal::trailblazer::Trailblazer;
 
 use ignore::WalkBuilder;
 use serde_json::Value;
@@ -68,8 +67,26 @@ pub fn process_path(path: String) {
       alchemist.process_objects(path.as_str(), map);
 
       if modular {
-        // IF MODULAR, GENERATES THE CSS AND JS FILES.
-        // IF NOT MODULAR, GENERATES THE CSS AND JS FILES ON THE process_gatekeeper
+        let trailblazer = Trailblazer::new();
+
+        if let Ok((css_path, js_path)) = trailblazer.format_path(&path) {
+          let is_css_file = trailblazer.generates_css(&css_path);
+
+          if is_css_file {
+            let is_js_file = trailblazer.generates_js(&js_path);
+
+            if !is_js_file {
+              blueprint.error("something went wrong whiling creating a JS file".to_string());
+              blueprint.info(format!("path not processed: {}", path).to_string());
+            }
+          } else {
+            blueprint.error("something went wrong whiling creating a CSS file".to_string());
+            blueprint.info(format!("path not processed: {}", path).to_string());
+          }
+
+          trailblazer.clear_stylitron();
+          trailblazer.clear_stylometric();
+        }
       }
     }
   } else {
@@ -80,51 +97,77 @@ pub fn process_path(path: String) {
 
 #[napi]
 pub fn process_gatekeeper() {
-  let mut processed_paths: Vec<String> = vec![];
-  let mut gatekeeper = Gatekeeper::new();
-  let paths: Vec<_> = WalkBuilder::new(".")
-    .build()
-    .filter_map(Result::ok)
-    .filter(|entry| {
-      entry.file_type().map_or(false, |t| t.is_file())
-        && entry.path().extension().map_or(false, |ext| {
-          ext == "js" || ext == "jsx" || ext == "ts" || ext == "tsx"
-        })
-    })
-    .map(|entry| entry.into_path())
-    .collect();
+  let blueprint = Blueprint::new();
+  let trailblazer = Trailblazer::new();
+  let configatron = Configatron::new();
+  let config = configatron.collects_from_rust(vec!["modular"]);
 
-  for path in paths.into_iter() {
-    if let Ok(code) = readify(&path.to_string_lossy()) {
-      if code.contains("createStyles") {
-        let path_string = path.to_string_lossy().to_string();
-        let parts: Vec<&str> = path_string
-          .split(".")
-          .filter(|entry| !entry.is_empty())
-          .collect();
+  let modular = match config.get("modular") {
+    Some(Value::Bool(b)) => *b,
+    _ => false,
+  };
 
-        if let Some(path_str) = parts.first() {
-          if !processed_paths.contains(&path_str.to_string()) {
-            processed_paths.push(path_str.to_string());
-          }
+  if modular {
+    let mut processed_paths: Vec<String> = vec![];
+    let mut gatekeeper = Gatekeeper::new();
+    let paths: Vec<_> = WalkBuilder::new(".")
+      .build()
+      .filter_map(Result::ok)
+      .filter(|entry| {
+        entry.file_type().map_or(false, |t| t.is_file())
+          && entry.path().extension().map_or(false, |ext| {
+            ext == "js" || ext == "jsx" || ext == "ts" || ext == "tsx"
+          })
+      })
+      .map(|entry| entry.into_path())
+      .collect();
 
-          let intaker = Intaker::new();
-          let imports = intaker.process_code(code);
+    for path in paths.into_iter() {
+      if let Ok(code) = readify(&path.to_string_lossy()) {
+        if code.contains("createStyles") {
+          let path_string = path.to_string_lossy().to_string();
+          let parts: Vec<&str> = path_string
+            .split(".")
+            .filter(|entry| !entry.is_empty())
+            .collect();
 
-          for import in imports.iter() {
-            let formatted_import = pathify(&path_string, import);
+          if let Some(path_str) = parts.first() {
+            if !processed_paths.contains(&path_str.to_string()) {
+              processed_paths.push(path_str.to_string());
+            }
 
-            gatekeeper.add_import(path_str, &formatted_import);
+            let intaker = Intaker::new();
+            let imports = intaker.process_code(code);
+
+            for import in imports.iter() {
+              let formatted_import = pathify(&path_string, import);
+
+              gatekeeper.add_import(path_str, &formatted_import);
+            }
           }
         }
       }
     }
+
+    let _groups = gatekeeper.group_paths(&processed_paths);
+
+    //println!("{:#?}", groups);
+  } else {
+    let is_css_file = trailblazer.generates_css(&".galadriel/global.css".to_string());
+
+    if is_css_file {
+      let is_js_file = trailblazer.generates_js(&".galadriel/global.js".to_string());
+
+      if !is_js_file {
+        blueprint.error("something went wrong whiling creating a JS file".to_string());
+        blueprint.info(format!("global generation not processed").to_string());
+      }
+    } else {
+      blueprint.error("something went wrong whiling creating a CSS file".to_string());
+      blueprint.info(format!("global generation not processed").to_string());
+    }
+
+    trailblazer.clear_stylitron();
+    trailblazer.clear_stylometric();
   }
-
-  //gatekeeper.print_graph();
-  let groups = gatekeeper.group_paths(&processed_paths);
-  println!("{:#?}", groups);
-
-  // GENERATES THE CSS FILE AND JS FILE CONTAINING THE CLASS NAMES ON GLOBAL CONFIGURATION IN HERE.
-  // GENERATED THE INITIAL JS FILE CONTAINING THE GROUPS.
 }
