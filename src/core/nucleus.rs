@@ -7,6 +7,4 @@ lazy_static! {
     Arc::new(Mutex::new(HashMap::new()));
   pub static ref STYLOMETRIC: Arc<Mutex<HashMap<String, HashMap<String, HashMap<String, String>>>>> =
     Arc::new(Mutex::new(HashMap::new()));
-  pub static ref TRAILBLAZER: Arc<Mutex<HashMap<String, Vec<String>>>> =
-    Arc::new(Mutex::new(HashMap::new()));
 }
