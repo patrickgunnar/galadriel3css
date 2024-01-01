@@ -1259,17 +1259,17 @@ impl Alchemist {
     pseudo: String,
     rule: &String,
     key: &String,
-  ) -> Result<(bool, String), String> {
+  ) -> Result<String, String> {
     // Generate a class name using generates_class_name function
     let cls_name = Self::generates_class_name(is_modular, path, property, value, selector);
 
     // Construct the CSS class string
     let css_cls = format!(".{}{}{{{}}}", cls_name, pseudo, rule);
     // Append the style rule to the Abstract Syntax Tree (AST)
-    let is_in_ast = Self::append_to_ast(is_media, key, property, css_cls);
+    Self::append_to_ast(is_media, key, property, css_cls);
 
     // Return the result as a tuple in a Result
-    Ok((is_in_ast, cls_name))
+    Ok(cls_name)
   }
 
   // Function to trigger the nested processing of styles.
@@ -1316,7 +1316,7 @@ impl Alchemist {
               let rule = format!("{}:{}", prop_key, ternary_v);
 
               // Trigger the append of nested styles
-              if let Ok((is_in_ast, cls_name)) = Self::trigger_append_of_nested(
+              if let Ok(cls_name) = Self::trigger_append_of_nested(
                 is_media,
                 is_modular,
                 path,
@@ -1327,16 +1327,14 @@ impl Alchemist {
                 &rule,
                 key,
               ) {
-                // If the append is successful, insert into the intern_value_map
-                if is_in_ast {
-                  intern_value_map.insert(ternary_v.to_string(), cls_name);
-                }
+                // insert into the intern_value_map
+                intern_value_map.insert(ternary_v.to_string(), cls_name);
               }
             }
           }
         } else {
           // If there's no ternary operation, trigger the append for the property-value pair
-          if let Ok((is_in_ast, cls_name)) = Self::trigger_append_of_nested(
+          if let Ok(cls_name) = Self::trigger_append_of_nested(
             is_media,
             is_modular,
             path,
@@ -1347,10 +1345,8 @@ impl Alchemist {
             value_str,
             key,
           ) {
-            // If the append is successful, insert into the intern_value_map
-            if is_in_ast {
-              intern_value_map.insert(prop_value.to_string(), cls_name);
-            }
+            // insert into the intern_value_map
+            intern_value_map.insert(prop_value.to_string(), cls_name);
           }
         }
 
@@ -1377,21 +1373,21 @@ impl Alchemist {
     path: &str,
     key: &String,
     value: &String,
-  ) -> Result<(bool, String), String> {
+  ) -> Result<String, String> {
     // Process the property-value pair to generate CSS classes
     if let Ok((css_cls, cls_name)) = Self::process_property_value(is_modular, path, key, value) {
       // Check if the generated class name is not empty
       if !cls_name.is_empty() {
         // Append the style rule to the Abstract Syntax Tree (AST)
-        let is_in_ast = Self::append_to_ast(false, &"".to_string(), key, css_cls);
+        Self::append_to_ast(false, &"".to_string(), key, css_cls);
 
         // Return the result as a tuple in a Result
-        return Ok((is_in_ast, cls_name));
+        return Ok(cls_name);
       }
     }
 
     // Return a default result if the processing fails
-    Ok((false, "".to_string()))
+    Ok("".to_string())
   }
 
   // Function to trigger the processing of a property value.
@@ -1417,31 +1413,25 @@ impl Alchemist {
         // Iterate over the ternary values
         for ternary_v in &[first_value, second_value] {
           // Trigger the append operation for the property value
-          if let Ok((is_in_ast, cls_name)) =
+          if let Ok(cls_name) =
             Self::trigger_append_of_property_value(is_modular, path, key, ternary_v)
           {
-            // If the append is successful, insert into the intern_value_map
-            if is_in_ast {
-              let mut name_map: HashMap<String, String> = HashMap::new();
+            // insert into the intern_value_map
+            let mut name_map: HashMap<String, String> = HashMap::new();
 
-              name_map.insert("name".to_string(), cls_name);
-              intern_value_map.insert(ternary_v.to_string(), name_map);
-            }
+            name_map.insert("name".to_string(), cls_name);
+            intern_value_map.insert(ternary_v.to_string(), name_map);
           }
         }
       }
     } else {
       // If there's no ternary operation, trigger the append for the property value
-      if let Ok((is_in_ast, cls_name)) =
-        Self::trigger_append_of_property_value(is_modular, path, key, value)
-      {
-        // If the append is successful, insert into the intern_value_map
-        if is_in_ast {
-          let mut name_map: HashMap<String, String> = HashMap::new();
+      if let Ok(cls_name) = Self::trigger_append_of_property_value(is_modular, path, key, value) {
+        // insert into the intern_value_map
+        let mut name_map: HashMap<String, String> = HashMap::new();
 
-          name_map.insert("name".to_string(), cls_name);
-          intern_value_map.insert(value.to_string(), name_map);
-        }
+        name_map.insert("name".to_string(), cls_name);
+        intern_value_map.insert(value.to_string(), name_map);
       }
     }
 
@@ -1455,11 +1445,7 @@ impl Alchemist {
   // - identifier: String representing an identifier for the children objects.
   // - v: HashMap containing children objects and their associated CSS class names.
   // Returns: HashMap containing the processed CSS class map for the children objects.
-  fn trigger_children_objects_process(cls_name: String, v: &HashMap<String, String>) -> bool {
-    // variable to control the state of the children
-    // weather the style were appended into the ast or not
-    let mut is_children_in_ast = false;
-
+  fn trigger_children_objects_process(cls_name: String, v: &HashMap<String, String>) {
     // Iterate over the children objects (key-value pairs) in the HashMap
     for (key, value) in v.iter() {
       // Check if the value is wrapped in curly braces indicating a block of styles
@@ -1472,22 +1458,11 @@ impl Alchemist {
             let cls = format!(".{}{}", cls_name, css_cls);
 
             // Append the style rule to the Abstract Syntax Tree (AST)
-            let is_in_ast =
-              Self::append_to_ast(is_media, &selector, &"targetChildren".to_string(), cls);
-
-            // if the styles were successfully appended into the AST
-            // and if the control variable is still false
-            if is_in_ast && !is_children_in_ast {
-              // sets the control variable to true
-              is_children_in_ast = true;
-            }
+            Self::append_to_ast(is_media, &selector, &"targetChildren".to_string(), cls);
           }
         }
       }
     }
-
-    // returns a bool value
-    is_children_in_ast
   }
 
   // Function to append a style rule to the Abstract Syntax Tree (AST).
@@ -1497,7 +1472,7 @@ impl Alchemist {
   // - attr: String representing an attribute or target for the style rule.
   // - css_cls: String representing the CSS class associated with the style rule.
   // Returns: Boolean indicating if the append operation is successful.
-  fn append_to_ast(is_media: bool, selector: &String, attr: &String, css_cls: String) -> bool {
+  fn append_to_ast(is_media: bool, selector: &String, attr: &String, css_cls: String) {
     // Lock the STYLITRON mutex for thread-safe access
     let mut stylitron = STYLITRON.lock().unwrap();
     // Flag to track if the property is not found in the AST
@@ -1516,7 +1491,7 @@ impl Alchemist {
               if !storage.contains(&css_cls) {
                 storage.push(css_cls.clone());
 
-                return true;
+                return;
               }
 
               // Set the flag if the property is found but the CSS class is already present
@@ -1532,7 +1507,7 @@ impl Alchemist {
               if !storage.contains(&css_cls) {
                 storage.push(css_cls.clone());
 
-                return true;
+                return;
               }
 
               // Set the flag if the property is found but the CSS class is already present
@@ -1548,7 +1523,7 @@ impl Alchemist {
               if !storage.contains(&css_cls) {
                 storage.push(css_cls.clone());
 
-                return true;
+                return;
               }
 
               // Set the flag if the property is found but the CSS class is already present
@@ -1563,7 +1538,7 @@ impl Alchemist {
             if !storage.contains(&css_cls) {
               storage.push(css_cls.clone());
 
-              return true;
+              return;
             }
 
             // Set the flag if the property is found but the CSS class is already present
@@ -1582,12 +1557,7 @@ impl Alchemist {
         .entry(attr.to_string())
         .or_insert_with(|| Vec::new())
         .push(css_cls.clone());
-
-      return true;
     }
-
-    // Return false if the append operation is not successful
-    false
   }
 
   // Function to append styles to the global stylometric data structure.
@@ -1707,16 +1677,14 @@ impl Alchemist {
           );
 
           // Trigger the processing of children objects and obtain the class map
-          let is_in_ast = Self::trigger_children_objects_process(cls_name.clone(), v);
+          Self::trigger_children_objects_process(cls_name.clone(), v);
 
           // if the children styles were appended into the AST
-          if is_in_ast {
-            name_map.insert("name".to_string(), cls_name);
-            // Insert the CSS class name into the cls_map
-            cls_map.insert("cls".to_string(), name_map);
-            // Insert the class map into the objects_map with the key "targetChildren"
-            objects_map.insert("targetChildren".to_string(), cls_map);
-          }
+          name_map.insert("name".to_string(), cls_name);
+          // Insert the CSS class name into the cls_map
+          cls_map.insert("cls".to_string(), name_map);
+          // Insert the class map into the objects_map with the key "targetChildren"
+          objects_map.insert("targetChildren".to_string(), cls_map);
         }
       }
 
