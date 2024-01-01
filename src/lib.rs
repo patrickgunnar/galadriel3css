@@ -149,16 +149,35 @@ pub fn process_gatekeeper() {
       }
     }
 
-    let _groups = gatekeeper.group_paths(&processed_paths);
+    let groups = gatekeeper.group_paths(&processed_paths);
+    let is_html_file = trailblazer.generates_html(groups);
 
-    //println!("{:#?}", groups);
+    if !is_html_file {
+      blueprint.error("something went wrong whiling creating a HTML file".to_string());
+      blueprint.info(format!("global generation not processed").to_string());
+    } else {
+      blueprint.log(blueprint.bold("all processes were completed!".to_string()));
+    }
   } else {
     let is_css_file = trailblazer.generates_css(&".galadriel/global.css".to_string());
 
     if is_css_file {
       let is_js_file = trailblazer.generates_js(&".galadriel/global.js".to_string());
 
-      if !is_js_file {
+      if is_js_file {
+        let mut groups: Vec<Vec<String>> = vec![];
+        let mut group: Vec<String> = vec![];
+
+        group.push("/.galadriel/global".to_string());
+        groups.push(group);
+
+        let is_html_file = trailblazer.generates_html(groups);
+
+        if !is_html_file {
+          blueprint.error("something went wrong whiling creating a HTML file".to_string());
+          blueprint.info(format!("global generation not processed").to_string());
+        }
+      } else {
         blueprint.error("something went wrong whiling creating a JS file".to_string());
         blueprint.info(format!("global generation not processed").to_string());
       }
