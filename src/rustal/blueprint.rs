@@ -78,7 +78,7 @@ impl Blueprint {
   #[napi] // prints the received message as an error formatting
   pub fn error(&self, msg: String) {
     println!(
-      " {}•{} {} {}error__{} {}",
+      " {}•{} {} {}failure{} {}",
       self.bold_error_color,
       self.closing_style,
       self.use_current_time(),
@@ -104,7 +104,7 @@ impl Blueprint {
   #[napi] // prints the received message as an info formatting
   pub fn info(&self, msg: String) {
     println!(
-      " {}•{} {} {}info___{} {}",
+      " {}•{} {} {}reports{} {}",
       self.bold_info_color,
       self.closing_style,
       self.use_current_time(),
