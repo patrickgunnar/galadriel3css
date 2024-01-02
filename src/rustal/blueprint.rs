@@ -65,7 +65,7 @@ impl Blueprint {
   #[napi] // prints the received message as a log formatting
   pub fn log(&self, msg: String) {
     println!(
-      " {}•{} {} {}log____{} {}",
+      " {}•{} {} {}logging{} {}",
       self.bold_log_color,
       self.closing_style,
       self.use_current_time(),
@@ -91,7 +91,7 @@ impl Blueprint {
   #[napi] // prints the received message as warning formatting
   pub fn warn(&self, msg: String) {
     println!(
-      " {}•{} {} {}warn___{} {}",
+      " {}•{} {} {}warning{} {}",
       self.bold_warning_color,
       self.closing_style,
       self.use_current_time(),
