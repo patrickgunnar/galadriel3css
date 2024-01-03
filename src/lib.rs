@@ -73,7 +73,7 @@ pub fn process_path(path: String) {
           let is_css_file = trailblazer.generates_css(&css_path);
 
           if is_css_file {
-            let is_js_file = trailblazer.generates_js(&js_path);
+            let is_js_file = trailblazer.generates_cls_name(&js_path);
 
             if !is_js_file {
               blueprint.error("something went wrong whiling creating a JS file".to_string());
@@ -150,7 +150,7 @@ pub fn process_gatekeeper() {
     }
 
     let groups = gatekeeper.group_paths(&processed_paths);
-    let is_html_file = trailblazer.generates_html(groups);
+    let is_html_file = trailblazer.generates_config(groups);
 
     if !is_html_file {
       blueprint.error("something went wrong whiling creating a HTML file".to_string());
@@ -162,7 +162,7 @@ pub fn process_gatekeeper() {
     let is_css_file = trailblazer.generates_css(&".galadriel/global.css".to_string());
 
     if is_css_file {
-      let is_js_file = trailblazer.generates_js(&".galadriel/global.js".to_string());
+      let is_js_file = trailblazer.generates_cls_name(&".galadriel/global.js".to_string());
 
       if is_js_file {
         let mut groups: Vec<Vec<String>> = vec![];
@@ -171,7 +171,7 @@ pub fn process_gatekeeper() {
         group.push("/.galadriel/global".to_string());
         groups.push(group);
 
-        let is_html_file = trailblazer.generates_html(groups);
+        let is_html_file = trailblazer.generates_config(groups);
 
         if !is_html_file {
           blueprint.error("something went wrong whiling creating a HTML file".to_string());
