@@ -27,7 +27,7 @@ impl Trailblazer {
     // Return the formatted CSS and JS file paths as a Result.
     Ok((
       format!("{}.css", formatted_path),
-      format!("{}.js", formatted_path),
+      format!("{}.html", formatted_path),
     ))
   }
 
@@ -88,51 +88,37 @@ impl Trailblazer {
 
   // Generate an HTML file based on the provided groups of CSS and JS paths.
   // Returns true if the operation is successful, false otherwise.
-  pub fn generates_html(&self, groups: Vec<Vec<String>>) -> bool {
+  pub fn generates_config(&self, groups: Vec<Vec<String>>) -> bool {
     // Initialize an empty string to store the HTML content.
-    let mut result = String::new();
-
-    // Iterate over each group of paths.
-    for (idx, group) in groups.iter().enumerate() {
-      // Iterate over each path in the group.
-      for path in group.iter() {
-        // Format the link tag for the CSS file.
-        let script_css = format!("<link rel=\"stylesheet\" href=\"{}.css\" data-group=\"galadriel_{}\" data-precedence=\"galadriel\" />", path, idx);
-        // Format the script tag for the JS file.
-        let script_js = format!("<script src=\"{}.js\" data-group=\"galadriel_{}\" data-precedence=\"galadriel\"></script>", path, idx);
-
-        // Concatenate the formatted CSS and JS tags to the result string.
-        result += script_css.as_str();
-        result += script_js.as_str();
-      }
-    }
-
-    // Format the result as the HTML header.
-    let header = format!("{}", result);
+    let result = format!(
+      "<script id=\"galadriel-config\" type=\"application/json\">{:?}</script>",
+      groups
+    );
 
     // Create the HTML file with the generated header content.
-    Self::create_file(&".galadriel/galadriel.html".to_string(), &header)
+    Self::create_file(&".galadriel/galadriel.html".to_string(), &result)
   }
 
   // Generate a JavaScript file based on the stylometric data.
   // Returns true if the operation is successful, false otherwise.
-  pub fn generates_js(&self, path: &String) -> bool {
+  pub fn generates_cls_name(&self, path: &String) -> bool {
     // Lock the STYLOMETRIC data structure for exclusive access.
     let stylometric = STYLOMETRIC.lock().unwrap();
     // Initialize a string with the starting part of the JavaScript content.
-    let mut result = "var ".to_string();
+    let mut result = String::new();
 
     // Iterate over each entry in the stylometric data.
     for (key, value) in stylometric.iter() {
-      // Format the entry as a JavaScript variable assignment.
-      let formatted = format!("{}={},", key, format!("{:?}", value));
+      // Format the entry as an HTML script tag
+      let current_script = format!(
+        "<script id=\"{}\" type=\"application/json\">{}</script>",
+        key,
+        format!("{:?}", value)
+      );
 
       // Concatenate the formatted entry to the result string.
-      result += formatted.as_str();
+      result += current_script.as_str();
     }
-
-    // Remove the trailing comma from the result string.
-    result.remove(result.len() - 1);
 
     // Create the JavaScript file with the generated content.
     Self::create_file(path, &result)
