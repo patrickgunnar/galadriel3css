@@ -9,7 +9,7 @@ alpha_num_with_underline = _{ (ALPHANUMERIC+ | "_")* }
 quotted_value = _{ QUOTATION_MARK ~  alpha_num_with_underline ~ QUOTATION_MARK}
 
 //scope = { "alias" | "variables" | "theme" | "classes" | "class" }
-class_name = { quotted_value }
+name = { quotted_value }
 extends = { quotted_value }
 
 children = { (alias | variables | classes | class)* ~ ","? }
@@ -22,11 +22,11 @@ properties = {
 }
 
 global = { 
-    assignment ~ "global" ~ class_name ~ "{" ~ children ~ (theme)* ~ "}"
+    assignment ~ "global" ~ name ~ "{" ~ children ~ (theme)* ~ "}"
 }
 
 component = { 
-    assignment ~ "component" ~ class_name ~ ("extends" ~ "global" ~ extends)? ~ 
+    assignment ~ "component" ~ name ~ ("extends" ~ "global" ~ extends)? ~ 
     "{" ~ children ~ "}"
 }
 
