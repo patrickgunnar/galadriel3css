@@ -1,6 +1,6 @@
 # Galadriel3CSS (G3CSS)
 
-### Please note that Galadriel3CSS is currently under active development.
+### Please note that Galadriel3CSS and G3CSS are currently under active development.
 
 Galadriel3CSS (G3CSS) is a cutting-edge framework developed by Patrick Gunnar for efficient CSS generation and management in web development environments. It offers powerful features tailored for creating scalable, performant stylesheets using the G3CSS Language.
 
