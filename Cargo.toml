@@ -1,0 +1,28 @@
+workspace = { members = [
+    "crates/g3css-common",
+    "crates/g3css-lsp",
+    "crates/g3css-observer",
+    "crates/g3css-parser",
+    "crates/g3css-transformer",
+] }
+
+[package]
+name = "galadriel3css"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+g3css-common = { path = "crates/g3css-common" }
+g3css-lsp = { path = "crates/g3css-lsp" }
+g3css-observer = { path = "crates/g3css-observer" }
+g3css-parser = { path = "crates/g3css-parser" }
+g3css-transformer = { path = "crates/g3css-transformer" }
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[[bin]]
+name = "galadriel3css"
+path = "src/main.rs"

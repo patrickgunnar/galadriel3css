@@ -1,0 +1,46 @@
+program = _{
+    SOI ~ define ~ EOI
+}
+
+define = _{ global | component }
+
+assignment = _{ "define" }
+alpha_num_with_underline = _{ (ALPHANUMERIC+ | "_")* }
+quotted_value = _{ QUOTATION_MARK ~  alpha_num_with_underline ~ QUOTATION_MARK}
+
+//scope = { "alias" | "variables" | "theme" | "classes" | "class" }
+class_name = { quotted_value }
+extends = { quotted_value }
+
+children = { (alias | variables | classes | class)* ~ ","? }
+properties = {
+    (
+        "background" ~ ":" ~ background ~ ","? |
+        "display" ~ ":" ~ display ~ ","? |
+        "border" ~ ":" ~ border ~ ","?
+    )*
+}
+
+global = { 
+    assignment ~ "global" ~ class_name ~ "{" ~ children ~ (theme)* ~ "}"
+}
+
+component = { 
+    assignment ~ "component" ~ class_name ~ ("extends" ~ "global" ~ extends)? ~ 
+    "{" ~ children ~ "}"
+}
+
+value = { alpha_num_with_underline }
+
+alias = { assignment ~ "alias" ~ "{" ~ value ~ "}" }
+variables = { assignment ~ "variables" ~ "{" ~ value ~ "}" }
+theme = { assignment ~ "theme" ~ "{" ~ value ~ "}" }
+classes = { assignment ~ "classes" ~ "{" ~ value ~ "}" }
+class = { assignment ~ "class" ~ "{" ~ properties ~ "}" }
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+ALPHANUMERIC = _{ ASCII_ALPHANUMERIC+ }
+
+background = { quotted_value }
+display = { quotted_value }
+border = { quotted_value }

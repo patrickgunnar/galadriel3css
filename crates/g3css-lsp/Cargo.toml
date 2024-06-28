@@ -1,0 +1,10 @@
+[package]
+name = "g3css-lsp"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+g3css-common = { path = "../g3css-common" }
+g3css-parser = { path = "../g3css-parser" }
