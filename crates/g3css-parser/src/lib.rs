@@ -8,7 +8,7 @@ mod build_ast_from_elements;
 use build_ast_from_elements::build_ast_from_elements;
 
 #[derive(Parser)]
-#[grammar = "g3css.pest"]
+#[grammar = "grammar/g3css.pest"]
 struct G3cssParser;
 
 /// Builds a vector of G3CSS elements nodes from inner pairs based on their rules.
