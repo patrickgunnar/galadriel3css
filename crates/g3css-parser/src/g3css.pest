@@ -32,12 +32,12 @@ component_children = { component_elements ~ ("," ~ component_elements)* ~ ","? }
 
 // Matches a global assignment with a name and child elements.
 global = { 
-    assignment ~ "global" ~ name ~ "{" ~ global_children ~ "}"
+    assignment ~ "global" ~ "scope" ~ name ~ "{" ~ global_children ~ "}"
 }
 
 // Matches a component assignment with optional extension and child elements.
 component = {
-    assignment ~ "component" ~ name ~ ("extends" ~ "global" ~ extends)? ~
+    assignment ~ "component" ~ "scope" ~ name ~ ("extends" ~ "global" ~ extends)? ~
     "{" ~ component_children ~ "}"
 }
 
@@ -55,7 +55,7 @@ class_name = { quotted_value }
 inherits = { quotted_value }
 
 // Defines an important_property rule that matches the word "important", followed by a colon (":"), and an important value.
-important_property = _{ "important" ~ ":" ~ important }
+important_property = _{ "!important" ~ ":" ~ important }
 // Defines an important rule that matches either "true" or "false".
 important = { ("true" | "false") }
 
