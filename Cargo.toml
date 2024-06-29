@@ -19,10 +19,3 @@ g3css-lsp = { path = "crates/g3css-lsp" }
 g3css-observer = { path = "crates/g3css-observer" }
 g3css-parser = { path = "crates/g3css-parser" }
 g3css-transformer = { path = "crates/g3css-transformer" }
-
-[lib]
-crate-type = ["rlib", "cdylib"]
-
-[[bin]]
-name = "galadriel3css"
-path = "src/main.rs"
