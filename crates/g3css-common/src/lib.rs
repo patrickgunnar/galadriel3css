@@ -12,7 +12,7 @@ pub enum G3cssPanoramic {
 pub enum G3cssClass {
     ClassName(String),
     Inherits(String),
-    Important(bool),
+    Important(String),
     Properties(Vec<G3cssElements>),
     Hover(Vec<G3cssElements>),
     Active(Vec<G3cssElements>),
