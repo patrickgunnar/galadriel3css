@@ -66,18 +66,18 @@ ALPHANUMERIC = _{ ASCII_ALPHANUMERIC+ }
 
 // Defines classes_children rule that matches a class_name, optionally followed by "inherits" and inherits,
 // enclosed in curly braces, allowing for multiple class_children separated by commas.
-classes_children = _{
-    class_name ~ ("inherits" ~ inherits)? ~ "{" ~
+inner_classes = {
+    class_name ~ ("inherits" ~ inherits)? ~ "{" ~ 
         class_children ~ ("," ~ class_children)* ~ ","?
     ~ "}"
 }
 
 // Defines classes rule that matches an assignment followed by "classes",
-// containing classes_children enclosed in square brackets,
-// allowing for multiple classes_children separated by commas.
+// containing inner_classes enclosed in square brackets,
+// allowing for multiple inner_classes separated by commas.
 classes = {
     assignment ~ "classes" ~ "[" ~
-        classes_children ~ ("," ~ classes_children)* ~ ","?
+        inner_classes ~ ("," ~ inner_classes)* ~ ","?
     ~ "]"
 }
 
