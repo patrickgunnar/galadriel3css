@@ -119,8 +119,9 @@ COMMENT = _{
 }
 // Defines WHITESPACE rule that matches any whitespace characters: space, tab, carriage return, or newline.
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
-// Defines ALPHANUMERIC rule that matches one or more ASCII alphanumeric characters.
+// Defines ALPHANUMERIC rule that matches one or more ASCII alphanumeric characters or underscore - lowercase only.
 ALPHANUMERIC = _{ ASCII_ALPHA_LOWER+ | ASCII_DIGIT+ | "_" }
+// Defines ALPHANUMERIC rule that matches one or more ASCII alphanumeric characters or underscore - uupercase only.
 ALPHANUMERIC_UPPERCASE = _{ ASCII_ALPHA_UPPER+ | ASCII_DIGIT+ | "_" }
 
 // Defines classes_children rule that matches a class_name, optionally followed by "inherits" and inherits,
