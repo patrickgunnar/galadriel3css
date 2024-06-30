@@ -109,6 +109,14 @@ important_property = _{ "!important" ~ ":" ~ important }
 // Defines an important rule that matches either "true" or "false".
 important = { ("true" | "false") }
 
+// Define the `COMMENT` rule.
+// A comment in G3CSS can be either:
+// - A line comment starting with "//" and extending until the end of the line.
+// - A block comment starting with "/*", ending with "*/", and can span multiple lines.
+COMMENT = _{
+    "//" ~ (!"\n" ~ ANY)* |
+    "/*" ~ (!("*/") ~ ANY)* ~ "*/"
+}
 // Defines WHITESPACE rule that matches any whitespace characters: space, tab, carriage return, or newline.
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 // Defines ALPHANUMERIC rule that matches one or more ASCII alphanumeric characters.
