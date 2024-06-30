@@ -21,7 +21,7 @@ name = { quotted_value }
 extends = { quotted_value }
 
 // Matches any of these global elements.
-global_elements = _{ aliases | variables | classes | class | theme }
+global_elements = _{ aliases | variables | classes | class | light_theme | dark_theme }
 // Matches any of these component elements.
 component_elements = _{ aliases | variables | classes | class }
 
@@ -41,38 +41,65 @@ component = {
     "{" ~ component_children ~ "}"
 }
 
+// Define a rule for "leading", which consists of one or more alphanumeric characters or underscores
 leading = { (ALPHANUMERIC+ | "_")* }
+// Define a rule for "importance", which consists of one or more alphanumeric characters or underscores
 importance = { (ALPHANUMERIC+ | "_")* }
 
+// Define a rule for "alias", which consists of a "leading" part, followed by a colon, and then an "importance" part
 alias = { leading ~ ":" ~ importance }
+// Define a rule for "aliases", which consists of the keyword "assignment", followed by the keyword "aliases",
+// then an opening curly brace, followed by one or more "alias" rules separated by commas, and optionally ending with a comma,
+// and finally a closing curly brace
 aliases = {
     assignment ~ "aliases" ~ "{" ~
         alias ~ ("," ~ alias)* ~ ","?
     ~ "}"
 }
 
+// Define a rule for "worth", which consists of an "elements_value"
 worth = { elements_value }
+// Define a rule for "variable", which consists of a "leading" part, followed by a colon, and then a "worth" part
 variable = { leading ~ ":" ~ worth }
 
+// Define a rule for "variables", which consists of the keyword "assignment", followed by the keyword "variables",
+// then an opening curly brace, followed by one or more "variable" rules separated by commas, and optionally ending with a comma,
+// and finally a closing curly brace
 variables = {
     assignment ~ "variables" ~ "{"~
         variable ~ ("," ~ variable)* ~ ","?
     ~ "}"
 }
 
-// TO WORK LATER
-value = { alpha_num_with_underscore }
-theme = { assignment ~ "theme" ~ "{" ~ value ~ "}" }
-// END WORK LATER
+// Define a rule for "light_theme", which consists of the keyword "assignment", 
+// followed by the keywords "light" and "theme", then an opening curly brace,
+// followed by "variables", and finally a closing curly brace
+light_theme = {
+    assignment ~ "light" ~ "theme" ~ "{" ~
+        variables
+    ~ "}"
+}
+
+// Define a rule for "dark_theme", which consists of the keyword "assignment", 
+// followed by the keywords "dark" and "theme", then an opening curly brace,
+// followed by "variables", and finally a closing curly brace
+dark_theme = {
+    assignment ~ "dark" ~ "theme" ~ "{" ~
+        variables
+    ~ "}"
+}
 
 // Defines a class_name rule that matches a quoted value.
 class_name = { quotted_value }
 // Defines an inherits rule that matches a quoted value.
 inherits = { quotted_value }
 
+// Define a rule for "primary", which consists of one or more alphanumeric characters or underscores
 primary = { (ALPHANUMERIC+ | "_")* }
+// Define a rule for "valuation", which consists of an "elements_value"
 valuation = { elements_value }
 
+// Define a rule for "nickname", which consists of a "primary" part, followed by a colon, and then a "valuation" part
 nickname = {
     primary ~ ":" ~ valuation
 }
