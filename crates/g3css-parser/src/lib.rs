@@ -181,7 +181,7 @@ fn build_nodes_from_classes(pair: pest::iterators::Pair<Rule>) -> Option<Vec<Vec
 }
 
 fn remove_whitespace(input: &str) -> String {
-    input.chars().filter(|c| !c.is_whitespace()).collect()
+    input.split_whitespace().next().unwrap_or("").to_string()
 }
 
 fn generates_alias_vec(pair: pest::iterators::Pair<Rule>) -> Option<Vec<String>> {
