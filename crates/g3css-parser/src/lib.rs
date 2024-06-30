@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use g3css_common::{
-    G3cssAlias, G3cssChildren, G3cssClass, G3cssElements, G3cssNode, G3cssVariable,
+    G3cssAlias, G3cssChildren, G3cssClass, G3cssElements, G3cssNode, G3cssTheme, G3cssVariable,
 };
 use pest::{error::Error, Parser};
 use pest_derive::Parser;
@@ -196,7 +196,12 @@ fn build_nodes_from_classes(pair: pest::iterators::Pair<Rule>) -> Option<Vec<Vec
 /// A new `String` with leading and trailing whitespace removed from the input, or an empty string if no non-whitespace characters are found.
 fn remove_whitespace(input: &str) -> String {
     // Split the input string by whitespace and retrieve the first segment without leading or trailing whitespace
-    input.split_whitespace().next().unwrap_or("").trim_matches('"').to_string()
+    input
+        .split_whitespace()
+        .next()
+        .unwrap_or("")
+        .trim_matches('"')
+        .to_string()
 }
 
 /// Generates a vector of strings representing an alias/variable from a Pest `Pair`.
@@ -296,13 +301,13 @@ fn build_nodes_from_aliases(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G3c
 }
 
 /// Builds a `G3cssVariable` AST node from a `Pair` of `Rule`.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// - `pair` - A `Pair` of `Rule` representing a variable in the G3CSS language.
 ///
 /// # Returns
-/// 
+///
 /// Returns an `Option` containing a `G3cssVariable` node if the `pair` matches the `Rule::variable`,
 /// or `None` if it does not match.
 fn build_ast_from_variable(pair: pest::iterators::Pair<Rule>) -> Option<G3cssVariable> {
@@ -316,13 +321,13 @@ fn build_ast_from_variable(pair: pest::iterators::Pair<Rule>) -> Option<G3cssVar
 }
 
 /// Builds a vector of `G3cssVariable` nodes from a `Pair` of `Rule`.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// - `pair` - A `Pair` of `Rule` representing variables in the G3CSS language.
 ///
 /// # Returns
-/// 
+///
 /// Returns an `Option` containing a vector of `G3cssVariable` nodes, or `None` if no nodes could be built.
 fn build_nodes_from_variables(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G3cssVariable>> {
     // Create an empty vector to store the nodes.
@@ -333,6 +338,52 @@ fn build_nodes_from_variables(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G
         // Attempt to build an AST node from the inner pair.
         // If successful, push the node to the vector.
         if let Some(node) = build_ast_from_variable(inner_pair) {
+            nodes.push(node);
+        }
+    }
+
+    // Return the vector of nodes wrapped in Some.
+    Some(nodes)
+}
+
+/// Builds a `G3cssTheme` AST node from a `Pair` of `Rule`.
+/// 
+/// # Arguments
+/// 
+/// - `pair` - A `Pair` of `Rule` representing a theme in the G3CSS language.
+///
+/// # Returns
+/// 
+/// Returns an `Option` containing a `G3cssTheme` node if the `pair` matches the `Rule::variables`,
+/// or `None` if it does not match.
+fn build_ast_from_theme(pair: pest::iterators::Pair<Rule>) -> Option<G3cssTheme> {
+    match pair.as_rule() {
+        // If the pair matches the `Rule::variables`, create a `G3cssTheme::Variables`
+        // by building nodes from the variables pair, and wrap it in Some.
+        Rule::variables => Some(G3cssTheme::Variables(build_nodes_from_variables(pair)?)),
+        // If the pair does not match the `Rule::variables`, return None.
+        _ => None,
+    }
+}
+
+/// Builds a vector of `G3cssTheme` nodes from a `Pair` of `Rule`.
+/// 
+/// # Arguments
+/// 
+/// - `pair` - A `Pair` of `Rule` representing themes in the G3CSS language.
+///
+/// # Returns
+/// 
+/// Returns an `Option` containing a vector of `G3cssTheme` nodes, or `None` if no nodes could be built.
+fn build_nodes_from_theme(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G3cssTheme>> {
+    // Create an empty vector to store the nodes.
+    let mut nodes = vec![];
+
+    // Iterate over the inner pairs of the given pair.
+    for inner_pair in pair.into_inner() {
+        // Attempt to build an AST node from the inner pair.
+        // If successful, push the node to the vector.
+        if let Some(node) = build_ast_from_theme(inner_pair) {
             nodes.push(node);
         }
     }
@@ -354,6 +405,10 @@ fn build_ast_from_children(pair: pest::iterators::Pair<Rule>) -> Option<G3cssChi
         Rule::aliases => Some(G3cssChildren::Aliases(build_nodes_from_aliases(pair)?)),
         // Collects the value from the variables rule.
         Rule::variables => Some(G3cssChildren::Variables(build_nodes_from_variables(pair)?)),
+        // Collects the value from the light theme rule.
+        Rule::light_theme => Some(G3cssChildren::LightTheme(build_nodes_from_theme(pair)?)),
+        // Collects the value from the dark theme rule.
+        Rule::dark_theme => Some(G3cssChildren::DarkTheme(build_nodes_from_theme(pair)?)),
         // Collects the value from the class rule.
         Rule::class => Some(G3cssChildren::Class(build_nodes_from_class(pair)?)),
         // Collects the value from the classes rule.
