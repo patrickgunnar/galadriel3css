@@ -50,10 +50,15 @@ pub enum G3cssClass {
     PanoramicViewer(Vec<G3cssPanoramic>),
 }
 
+#[derive(PartialEq, Debug, Clone)]
+pub enum G3cssAlias {
+    Alias(Vec<String>),
+}
+
 /// Enum representing different types of children elements in the G3CSS framework
 #[derive(PartialEq, Debug, Clone)]
 pub enum G3cssChildren {
-    Alias(String),
+    Aliases(Vec<G3cssAlias>),
     Variable(String),
     Class(Vec<G3cssClass>),
     Classes(Vec<Vec<G3cssClass>>),
