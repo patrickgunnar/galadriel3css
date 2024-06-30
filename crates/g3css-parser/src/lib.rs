@@ -301,7 +301,7 @@ fn build_ast_from_children(pair: pest::iterators::Pair<Rule>) -> Option<G3cssChi
         // Collects the value from the aliases rule.
         Rule::aliases => Some(G3cssChildren::Aliases(build_nodes_from_aliases(pair)?)),
         // Collects the value from the variables rule.
-        Rule::variables => Some(G3cssChildren::Variable(
+        Rule::variables => Some(G3cssChildren::Variables(
             pair.into_inner().as_str().to_string(),
         )),
         // Collects the value from the class rule.

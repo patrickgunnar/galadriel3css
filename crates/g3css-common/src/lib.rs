@@ -59,7 +59,7 @@ pub enum G3cssAlias {
 #[derive(PartialEq, Debug, Clone)]
 pub enum G3cssChildren {
     Aliases(Vec<G3cssAlias>),
-    Variable(String),
+    Variables(String),
     Class(Vec<G3cssClass>),
     Classes(Vec<Vec<G3cssClass>>),
 }
