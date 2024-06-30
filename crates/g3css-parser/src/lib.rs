@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
-use g3css_common::{G3cssAlias, G3cssChildren, G3cssClass, G3cssElements, G3cssNode};
+use g3css_common::{
+    G3cssAlias, G3cssChildren, G3cssClass, G3cssElements, G3cssNode, G3cssVariable,
+};
 use pest::{error::Error, Parser};
 use pest_derive::Parser;
 
@@ -194,38 +196,42 @@ fn build_nodes_from_classes(pair: pest::iterators::Pair<Rule>) -> Option<Vec<Vec
 /// A new `String` with leading and trailing whitespace removed from the input, or an empty string if no non-whitespace characters are found.
 fn remove_whitespace(input: &str) -> String {
     // Split the input string by whitespace and retrieve the first segment without leading or trailing whitespace
-    input.split_whitespace().next().unwrap_or("").to_string()
+    input.split_whitespace().next().unwrap_or("").trim_matches('"').to_string()
 }
 
-/// Generates a vector of strings representing an alias from a Pest `Pair`.
+/// Generates a vector of strings representing an alias/variable from a Pest `Pair`.
 ///
 /// Constructs a vector of strings based on inner pairs of the provided `Pair`.
-/// Returns `Some(Vec<String>)` with the constructed alias vector, or `None` if
+/// Returns `Some(Vec<String>)` with the constructed alias/variable vector, or `None` if
 /// parsing or construction fails.
 ///
 /// # Arguments
 ///
-/// - `pair` - A `Pair` from the Pest parser representing alias components.
+/// - `pair` - A `Pair` from the Pest parser representing alias/variable components.
 ///
 /// # Returns
 ///
 /// An `Option<Vec<String>>` containing the constructed vector of strings
-/// representing an alias, or `None` if parsing fails.
-fn generates_alias_vec(pair: pest::iterators::Pair<Rule>) -> Option<Vec<String>> {
-    // Create an empty vector to hold the alias components
-    let mut alias = vec![];
+/// representing an alias/variable, or `None` if parsing fails.
+fn generates_string_vec(pair: pest::iterators::Pair<Rule>) -> Option<Vec<String>> {
+    // Create an empty vector to hold the alias/variable components
+    let mut alias_var = vec![];
 
     // Iterate over each inner pair within the provided pair
     for inner_pair in pair.into_inner() {
-        // Match the rule of the inner pair to determine the alias component type
+        // Match the rule of the inner pair to determine the alias/variable component type
         match inner_pair.as_rule() {
-            // If it matches Rule::leading, push the trimmed string to alias vector
+            // If it matches Rule::leading, push the trimmed string to alias/variable vector
             Rule::leading => {
-                alias.push(remove_whitespace(inner_pair.as_str()));
+                alias_var.push(remove_whitespace(inner_pair.as_str()));
             }
             // If it matches Rule::importance, push the trimmed string to alias vector
             Rule::importance => {
-                alias.push(remove_whitespace(inner_pair.as_str()));
+                alias_var.push(remove_whitespace(inner_pair.as_str()));
+            }
+            // If it matches Rule::worth, push the trimmed string to variable vector
+            Rule::worth => {
+                alias_var.push(remove_whitespace(inner_pair.as_str()));
             }
             // Ignore other rules
             _ => (),
@@ -233,7 +239,7 @@ fn generates_alias_vec(pair: pest::iterators::Pair<Rule>) -> Option<Vec<String>>
     }
 
     // Return the alias vector wrapped in `Some`, indicating successful construction
-    Some(alias)
+    Some(alias_var)
 }
 
 /// Builds an AST node representing a G3css alias from a Pest `Pair`.
@@ -253,7 +259,7 @@ fn generates_alias_vec(pair: pest::iterators::Pair<Rule>) -> Option<Vec<String>>
 fn build_ast_from_alias(pair: pest::iterators::Pair<Rule>) -> Option<G3cssAlias> {
     match pair.as_rule() {
         // Construct an alias node for generic alias using a helper function
-        Rule::alias => Some(G3cssAlias::Alias(generates_alias_vec(pair)?)),
+        Rule::alias => Some(G3cssAlias::Alias(generates_string_vec(pair)?)),
         // Return None for unrecognized rules
         _ => None,
     }
@@ -289,6 +295,52 @@ fn build_nodes_from_aliases(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G3c
     Some(nodes)
 }
 
+/// Builds a `G3cssVariable` AST node from a `Pair` of `Rule`.
+/// 
+/// # Arguments
+/// 
+/// - `pair` - A `Pair` of `Rule` representing a variable in the G3CSS language.
+///
+/// # Returns
+/// 
+/// Returns an `Option` containing a `G3cssVariable` node if the `pair` matches the `Rule::variable`,
+/// or `None` if it does not match.
+fn build_ast_from_variable(pair: pest::iterators::Pair<Rule>) -> Option<G3cssVariable> {
+    match pair.as_rule() {
+        // If the pair matches the `Rule::variable`, create a `G3cssVariable::Variable`
+        // by generating a string vector from the pair, and wrap it in Some.
+        Rule::variable => Some(G3cssVariable::Variable(generates_string_vec(pair)?)),
+        // If the pair does not match the `Rule::variable`, return None.
+        _ => None,
+    }
+}
+
+/// Builds a vector of `G3cssVariable` nodes from a `Pair` of `Rule`.
+/// 
+/// # Arguments
+/// 
+/// - `pair` - A `Pair` of `Rule` representing variables in the G3CSS language.
+///
+/// # Returns
+/// 
+/// Returns an `Option` containing a vector of `G3cssVariable` nodes, or `None` if no nodes could be built.
+fn build_nodes_from_variables(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G3cssVariable>> {
+    // Create an empty vector to store the nodes.
+    let mut nodes = vec![];
+
+    // Iterate over the inner pairs of the given pair.
+    for inner_pair in pair.into_inner() {
+        // Attempt to build an AST node from the inner pair.
+        // If successful, push the node to the vector.
+        if let Some(node) = build_ast_from_variable(inner_pair) {
+            nodes.push(node);
+        }
+    }
+
+    // Return the vector of nodes wrapped in Some.
+    Some(nodes)
+}
+
 /// Builds a G3CSS children node from a parsing pair based on its rule.
 ///
 /// # Parameters
@@ -301,9 +353,7 @@ fn build_ast_from_children(pair: pest::iterators::Pair<Rule>) -> Option<G3cssChi
         // Collects the value from the aliases rule.
         Rule::aliases => Some(G3cssChildren::Aliases(build_nodes_from_aliases(pair)?)),
         // Collects the value from the variables rule.
-        Rule::variables => Some(G3cssChildren::Variables(
-            pair.into_inner().as_str().to_string(),
-        )),
+        Rule::variables => Some(G3cssChildren::Variables(build_nodes_from_variables(pair)?)),
         // Collects the value from the class rule.
         Rule::class => Some(G3cssChildren::Class(build_nodes_from_class(pair)?)),
         // Collects the value from the classes rule.
