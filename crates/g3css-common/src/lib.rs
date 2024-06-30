@@ -1,10 +1,10 @@
-/// Enum representing different panoramic views in the G3CSS framework (e.g., Mobile, Tablet, Laptop, Desktop)
+/// Enum representing different panoramic viewers in the G3CSS framework
+/// Breakpoint - represents the media rules (e.g., Mobile, Tablet, Laptop, Desktop)
+/// Children - represents the properties of elements in the G3CSS framework
 #[derive(PartialEq, Debug, Clone)]
 pub enum G3cssPanoramic {
-    Mobile(Vec<G3cssElements>),
-    Table(Vec<G3cssElements>),
-    Laptop(Vec<G3cssElements>),
-    Desktop(Vec<G3cssElements>),
+    Breakpoint(String),
+    Children(Vec<G3cssClass>),
 }
 
 /// Enum representing different properties of class elements in the G3CSS framework
@@ -47,19 +47,25 @@ pub enum G3cssClass {
     LeftPage(Vec<G3cssElements>),
     RightPage(Vec<G3cssElements>),
     Empty(Vec<G3cssElements>),
-    PanoramicViewer(Vec<G3cssPanoramic>),
+    PanoramicViewer(Vec<Vec<G3cssPanoramic>>),
 }
 
+/// Enum representing a G3CSS alias.
+/// Represents an alias with a vector of strings.
 #[derive(PartialEq, Debug, Clone)]
 pub enum G3cssAlias {
     Alias(Vec<String>),
 }
 
+/// Enum representing a G3CSS variable.
+/// Represents a variable with a vector of strings.
 #[derive(PartialEq, Debug, Clone)]
 pub enum G3cssVariable {
     Variable(Vec<String>),
 }
 
+/// Enum representing a G3CSS theme.
+/// Represents a theme with a vector of G3CSS variables.
 #[derive(PartialEq, Debug, Clone)]
 pub enum G3cssTheme {
     Variables(Vec<G3cssVariable>),
