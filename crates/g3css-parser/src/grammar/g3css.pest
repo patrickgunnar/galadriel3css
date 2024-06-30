@@ -51,10 +51,17 @@ aliases = {
     ~ "}"
 }
 
+worth = { elements_value }
+variable = { leading ~ ":" ~ worth }
+
+variables = {
+    assignment ~ "variables" ~ "{"~
+        variable ~ ("," ~ variable)* ~ ","?
+    ~ "}"
+}
+
 // TO WORK LATER
 value = { alpha_num_with_underscore }
-
-variables = { assignment ~ "variables" ~ "{" ~ value ~ "}" }
 theme = { assignment ~ "theme" ~ "{" ~ value ~ "}" }
 // END WORK LATER
 
