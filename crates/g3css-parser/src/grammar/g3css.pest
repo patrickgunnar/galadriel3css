@@ -137,7 +137,7 @@ classes = {
 class = { 
     assignment ~ "class" ~ class_name ~ ("inherits" ~ inherits)? ~ "{" ~ 
         class_children ~ ("," ~ class_children)* ~ ","?
-    ~ "}" 
+    ~ "}"
 }
 
 // Matches various properties, pseudo-classes, and pseudo-elements
@@ -145,7 +145,27 @@ class_children = _{
     important_property | properties | hover | active | focus | first_child | last_child | first_of_type |
     last_of_type | only_child | only_of_type | target_pseudo_class | visited | checked | disabled | enabled |
     read_only | read_write | placeholder_shown | valid | invalid | required | optional | fullscreen | focus_within |
+    first_line | first_letter | before | after | out_of_range | root | first_page | left_page | right_page | empty |
+    panoramic_viewer
+}
+
+panoramic_children = _{
+    important_property | properties | hover | active | focus | first_child | last_child | first_of_type |
+    last_of_type | only_child | only_of_type | target_pseudo_class | visited | checked | disabled | enabled |
+    read_only | read_write | placeholder_shown | valid | invalid | required | optional | fullscreen | focus_within |
     first_line | first_letter | before | after | out_of_range | root | first_page | left_page | right_page | empty
+}
+
+media_query = { 
+    leading ~ ":" ~ "{" ~
+        panoramic_children ~ ("," ~ panoramic_children)* ~ ","?
+    ~ "}"
+}
+
+panoramic_viewer = {
+    "panoramic_viewer" ~ ":" ~ "{" ~
+        media_query ~ ("," ~ media_query)* ~ ","?
+    ~ "}"
 }
 
 // This group matches a list of properties, pseudo-classes, and pseudo-elements inside curly braces
