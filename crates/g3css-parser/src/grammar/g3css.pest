@@ -76,7 +76,7 @@ variables = {
 // followed by "variables", and finally a closing curly brace
 light_theme = {
     assignment ~ "light" ~ "theme" ~ "{" ~
-        variables
+        variables ~ ","?
     ~ "}"
 }
 
@@ -85,7 +85,7 @@ light_theme = {
 // followed by "variables", and finally a closing curly brace
 dark_theme = {
     assignment ~ "dark" ~ "theme" ~ "{" ~
-        variables
+        variables ~ ","?
     ~ "}"
 }
 
