@@ -9,9 +9,9 @@ define = _{ global | component }
 // Matches the literal string "define".
 assignment = _{ "define" }
 // Matches any alphanumeric characters or underscores zero or more times.
-alpha_num_with_underscore = _{ (ALPHANUMERIC+ | "_")* }
+alpha_num_with_underscore_uppercase = _{ (ALPHANUMERIC_UPPERCASE+)* }
 // Matches a value enclosed in quotation marks.
-quotted_value = _{ QUOTATION_MARK ~  alpha_num_with_underscore ~ QUOTATION_MARK }
+quotted_value = _{ QUOTATION_MARK ~  alpha_num_with_underscore_uppercase ~ QUOTATION_MARK }
 // Matches any content inside quotation marks.
 elements_value = _{ QUOTATION_MARK ~ (!QUOTATION_MARK ~ ANY)* ~ QUOTATION_MARK }
 
@@ -42,9 +42,9 @@ component = {
 }
 
 // Define a rule for "leading", which consists of one or more alphanumeric characters or underscores
-leading = { (ALPHANUMERIC+ | "_")* }
+leading = { (ALPHANUMERIC+)* }
 // Define a rule for "importance", which consists of one or more alphanumeric characters or underscores
-importance = { (ALPHANUMERIC+ | "_")* }
+importance = { (ALPHANUMERIC+)* }
 
 // Define a rule for "alias", which consists of a "leading" part, followed by a colon, and then an "importance" part
 alias = { leading ~ ":" ~ importance }
@@ -95,7 +95,7 @@ class_name = { quotted_value }
 inherits = { quotted_value }
 
 // Define a rule for "primary", which consists of one or more alphanumeric characters or underscores
-primary = { (ALPHANUMERIC+ | "_")* }
+primary = { (ALPHANUMERIC+)* }
 // Define a rule for "valuation", which consists of an "elements_value"
 valuation = { elements_value }
 
@@ -120,7 +120,8 @@ COMMENT = _{
 // Defines WHITESPACE rule that matches any whitespace characters: space, tab, carriage return, or newline.
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 // Defines ALPHANUMERIC rule that matches one or more ASCII alphanumeric characters.
-ALPHANUMERIC = _{ ASCII_ALPHANUMERIC+ }
+ALPHANUMERIC = _{ ASCII_ALPHA_LOWER+ | ASCII_DIGIT+ | "_" }
+ALPHANUMERIC_UPPERCASE = _{ ASCII_ALPHA_UPPER+ | ASCII_DIGIT+ | "_" }
 
 // Defines classes_children rule that matches a class_name, optionally followed by "inherits" and inherits,
 // enclosed in curly braces, allowing for multiple class_children separated by commas.
@@ -166,7 +167,7 @@ panoramic_children = _{
 }
 
 // Define a rule for "prime", which consists of one or more alphanumeric characters or underscores
-prime = { (ALPHANUMERIC+ | "_")* }
+prime = { (ALPHANUMERIC+)* }
 
 // Define the `breakpoint` rule.
 // A breakpoint is composed of the following:
