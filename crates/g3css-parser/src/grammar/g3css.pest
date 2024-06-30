@@ -140,7 +140,7 @@ class = {
     ~ "}"
 }
 
-// Matches various properties, pseudo-classes, and pseudo-elements
+// Matches various properties, pseudo-classes, pseudo-elements and media rule
 class_children = _{
     important_property | properties | hover | active | focus | first_child | last_child | first_of_type |
     last_of_type | only_child | only_of_type | target_pseudo_class | visited | checked | disabled | enabled |
@@ -149,6 +149,7 @@ class_children = _{
     panoramic_viewer
 }
 
+// Matches various properties, pseudo-classes, and pseudo-elements
 panoramic_children = _{
     important_property | properties | hover | active | focus | first_child | last_child | first_of_type |
     last_of_type | only_child | only_of_type | target_pseudo_class | visited | checked | disabled | enabled |
@@ -156,14 +157,33 @@ panoramic_children = _{
     first_line | first_letter | before | after | out_of_range | root | first_page | left_page | right_page | empty
 }
 
+// Define a rule for "prime", which consists of one or more alphanumeric characters or underscores
 prime = { (ALPHANUMERIC+ | "_")* }
 
+// Define the `breakpoint` rule.
+// A breakpoint is composed of the following:
+// - `prime` (a primary identifier or value)
+// - `~ ":" ~` a colon separating `prime` from the block of children
+// - `~ "{" ~` an opening curly brace indicating the start of a block
+// - `panoramic_children` a rule representing children within the block
+// - `~ ("," ~ panoramic_children)* ~` zero or more additional children, each preceded by a comma
+// - `","?` an optional trailing comma after the last child
+// - `~ "}"` a closing curly brace indicating the end of the block
 breakpoint = { 
     prime ~ ":" ~ "{" ~
         panoramic_children ~ ("," ~ panoramic_children)* ~ ","?
     ~ "}"
 }
 
+// Define the `panoramic_viewer` rule.
+// A panoramic viewer is composed of the following:
+// - The literal string `"panoramic_viewer"`
+// - `~ ":" ~` a colon separating the literal string from the block of breakpoints
+// - `~ "{" ~` an opening curly brace indicating the start of a block
+// - `breakpoint` a rule representing a single breakpoint within the block
+// - `~ ("," ~ breakpoint)* ~` zero or more additional breakpoints, each preceded by a comma
+// - `","?` an optional trailing comma after the last breakpoint
+// - `~ "}"` a closing curly brace indicating the end of the block
 panoramic_viewer = {
     "panoramic_viewer" ~ ":" ~ "{" ~
         breakpoint ~ ("," ~ breakpoint)* ~ ","?
