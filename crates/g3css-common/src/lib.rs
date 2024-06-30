@@ -57,12 +57,19 @@ pub enum G3cssAlias {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum G3cssVariable {
-    Variable(Vec<String>)
+    Variable(Vec<String>),
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum G3cssTheme {
+    Variables(Vec<G3cssVariable>),
 }
 
 /// Enum representing different types of children elements in the G3CSS framework
 #[derive(PartialEq, Debug, Clone)]
 pub enum G3cssChildren {
+    LightTheme(Vec<G3cssTheme>),
+    DarkTheme(Vec<G3cssTheme>),
     Aliases(Vec<G3cssAlias>),
     Variables(Vec<G3cssVariable>),
     Class(Vec<G3cssClass>),
