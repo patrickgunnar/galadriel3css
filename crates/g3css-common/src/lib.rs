@@ -77,6 +77,7 @@ pub enum G3cssNode {
 /// Enum representing different types of elements in the G3CSS framework
 #[derive(PartialEq, Debug, Clone)]
 pub enum G3cssElements {
+    Nickname(Vec<String>),
     AspectRatio(String),
     AccentColor(String),
     BackdropFilter(String),
