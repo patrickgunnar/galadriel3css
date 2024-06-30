@@ -21,9 +21,9 @@ name = { quotted_value }
 extends = { quotted_value }
 
 // Matches any of these global elements.
-global_elements = _{ alias | variables | classes | class | theme }
+global_elements = _{ aliases | variables | classes | class | theme }
 // Matches any of these component elements.
-component_elements = _{ alias | variables | classes | class }
+component_elements = _{ aliases | variables | classes | class }
 
 // Matches a comma-separated list of global elements.
 global_children = { global_elements ~ ("," ~ global_elements)* ~ ","? }
@@ -41,10 +41,19 @@ component = {
     "{" ~ component_children ~ "}"
 }
 
+leading = { (ALPHANUMERIC+ | "_")* }
+importance = { (ALPHANUMERIC+ | "_")* }
+
+alias = { leading ~ ":" ~ importance }
+aliases = {
+    assignment ~ "aliases" ~ "{" ~
+        alias ~ ("," ~ alias)* ~ ","?
+    ~ "}"
+}
+
 // TO WORK LATER
 value = { alpha_num_with_underscore }
 
-alias = { assignment ~ "alias" ~ "{" ~ value ~ "}" }
 variables = { assignment ~ "variables" ~ "{" ~ value ~ "}" }
 theme = { assignment ~ "theme" ~ "{" ~ value ~ "}" }
 // END WORK LATER
@@ -53,6 +62,13 @@ theme = { assignment ~ "theme" ~ "{" ~ value ~ "}" }
 class_name = { quotted_value }
 // Defines an inherits rule that matches a quoted value.
 inherits = { quotted_value }
+
+primary = { (ALPHANUMERIC+ | "_")* }
+valuation = { elements_value }
+
+nickname = {
+    primary ~ ":" ~ valuation
+}
 
 // Defines an important_property rule that matches the word "important", followed by a colon (":"), and an important value.
 important_property = _{ "!important" ~ ":" ~ important }
@@ -523,7 +539,8 @@ property = _{
     "grid_template_rows" ~ ":" ~ grid_template_rows |
     "scrollbar_color" ~ ":" ~ scrollbar_color |
     "scrollbar_width" ~ ":" ~ scrollbar_width |
-    "scrollbar_gutter" ~ ":" ~ scrollbar_gutter
+    "scrollbar_gutter" ~ ":" ~ scrollbar_gutter |
+    nickname
 }
 
 // This group matches rules where the value is a string (containing any valid ASCII char).
