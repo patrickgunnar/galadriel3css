@@ -1,7 +1,8 @@
 use std::rc::Rc;
 
 use g3css_common::{
-    G3cssAlias, G3cssChildren, G3cssClass, G3cssElements, G3cssNode, G3cssTheme, G3cssVariable,
+    G3cssAlias, G3cssChildren, G3cssClass, G3cssElements, G3cssNode, G3cssPanoramic, G3cssTheme,
+    G3cssVariable,
 };
 use pest::{error::Error, Parser};
 use pest_derive::Parser;
@@ -36,6 +37,92 @@ fn build_node_from_elements(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G3c
     Some(nodes)
 }
 
+/// Builds nodes representing breakpoint and children from a Pest `Pair`.
+///
+/// Constructs a vector of `G3cssPanoramic` nodes based on inner pairs of the provided `Pair`.
+/// Returns `Some(Vec<G3cssPanoramic>)` with the constructed nodes, or `None` if
+/// parsing or construction fails.
+///
+/// # Arguments
+///
+/// - `pair` - A `Pair` from the Pest parser representing the breakpoint and children.
+///
+/// # Returns
+///
+/// An `Option<Vec<G3cssPanoramic>>` containing the constructed vector of `G3cssPanoramic` nodes,
+/// or `None` if parsing fails.
+fn build_nodes_from_breakpoints(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G3cssPanoramic>> {
+    // Create an empty vector to hold nodes representing breakpoint and children
+    let mut nodes = vec![];
+    // Create an empty vector to hold children as G3cssClass
+    let mut children: Vec<G3cssClass> = vec![];
+
+    // Iterate over each inner pair within the provided pair
+    for inner_pair in pair.into_inner() {
+        // Match the rule of the inner pair to determine the type of node
+        match inner_pair.as_rule() {
+            // If the inner pair matches Rule::prime,
+            // create a Breakpoint node and push it to nodes
+            Rule::prime => {
+                nodes.push(G3cssPanoramic::Breakpoint(remove_whitespace(
+                    inner_pair.as_str(),
+                )));
+            }
+            // For any other rule, attempt to build an AST node from the class
+            _ => {
+                if let Some(node) = build_ast_from_class(inner_pair) {
+                    children.push(node);
+                }
+            }
+        }
+    }
+
+    // Create a Children node containing the collected children and push it to nodes
+    nodes.push(G3cssPanoramic::Children(children));
+    // Return the constructed nodes wrapped in `Some`, indicating successful construction
+    Some(nodes)
+}
+
+/// Builds nodes representing a panoramic viewer from a Pest `Pair`.
+///
+/// Constructs a vector of vectors of `G3cssPanoramic` nodes based on inner pairs of the provided `Pair`.
+/// Returns `Some(Vec<Vec<G3cssPanoramic>>)` with the constructed nodes, or `None` if
+/// parsing or construction fails.
+///
+/// # Arguments
+///
+/// - `pair` - A `Pair` from the Pest parser representing a panoramic viewer.
+///
+/// # Returns
+///
+/// An `Option<Vec<Vec<G3cssPanoramic>>>` containing the constructed vector of vectors of `G3cssPanoramic` nodes,
+/// or `None` if parsing fails.
+fn build_nodes_from_panoramic_viewer(
+    pair: pest::iterators::Pair<Rule>,
+) -> Option<Vec<Vec<G3cssPanoramic>>> {
+    // Create an empty vector to hold nodes representing the panoramic viewer
+    let mut nodes = vec![];
+
+    // Iterate over each inner pair within the provided pair
+    for inner_pair in pair.into_inner() {
+        // Match the rule of the inner pair to determine the type of node
+        match inner_pair.as_rule() {
+            // If the inner pair matches Rule::breakpoint,
+            // build nodes from breakpoints and push them to nodes
+            Rule::breakpoint => {
+                if let Some(node) = build_nodes_from_breakpoints(inner_pair) {
+                    nodes.push(node);
+                }
+            }
+            // Ignore other rules
+            _ => (),
+        }
+    }
+
+    // Return the constructed nodes wrapped in `Some`, indicating successful construction
+    Some(nodes)
+}
+
 /// Builds a G3CSS class node from a parsing pair based on its rule.
 ///
 /// # Parameters
@@ -45,6 +132,10 @@ fn build_node_from_elements(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G3c
 /// Option containing the constructed G3CSS class node if matched, or None if the rule doesn't match.
 fn build_ast_from_class(pair: pest::iterators::Pair<Rule>) -> Option<G3cssClass> {
     match pair.as_rule() {
+        // Iterate over inner pairs and build nodes from panoramic viewer rule.
+        Rule::panoramic_viewer => Some(G3cssClass::PanoramicViewer(
+            build_nodes_from_panoramic_viewer(pair)?,
+        )),
         // Collects the value from the class name rule.
         Rule::class_name => Some(G3cssClass::ClassName(
             pair.as_str().trim_matches('"').to_string(),
@@ -347,13 +438,13 @@ fn build_nodes_from_variables(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G
 }
 
 /// Builds a `G3cssTheme` AST node from a `Pair` of `Rule`.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// - `pair` - A `Pair` of `Rule` representing a theme in the G3CSS language.
 ///
 /// # Returns
-/// 
+///
 /// Returns an `Option` containing a `G3cssTheme` node if the `pair` matches the `Rule::variables`,
 /// or `None` if it does not match.
 fn build_ast_from_theme(pair: pest::iterators::Pair<Rule>) -> Option<G3cssTheme> {
@@ -367,13 +458,13 @@ fn build_ast_from_theme(pair: pest::iterators::Pair<Rule>) -> Option<G3cssTheme>
 }
 
 /// Builds a vector of `G3cssTheme` nodes from a `Pair` of `Rule`.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// - `pair` - A `Pair` of `Rule` representing themes in the G3CSS language.
 ///
 /// # Returns
-/// 
+///
 /// Returns an `Option` containing a vector of `G3cssTheme` nodes, or `None` if no nodes could be built.
 fn build_nodes_from_theme(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G3cssTheme>> {
     // Create an empty vector to store the nodes.
