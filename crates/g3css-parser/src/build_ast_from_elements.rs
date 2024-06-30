@@ -2,6 +2,45 @@ use g3css_common::G3cssElements;
 
 use crate::Rule;
 
+/// Builds a nickname vector from a Pest `Pair`.
+///
+/// Given a `Pair` object representing a parsed nickname, this function
+/// extracts each inner pair, trims any surrounding double quotes from
+/// the string, and collects them into a `Vec<String>`.
+///
+/// # Arguments
+///
+/// - `pair` - A `Pair` from the Pest parser representing a parsed nickname.
+///
+/// # Returns
+///
+/// An `Option<Vec<String>>` containing the parts of the nickname, or `None`
+/// if extraction fails.
+fn build_node_from_nickname(pair: pest::iterators::Pair<Rule>) -> Option<Vec<String>> {
+    // Create an empty vector to hold the parts of the nickname
+    let mut nickname: Vec<String> = vec![];
+
+    // Iterate over each inner pair within the provided pair
+    for inner_pair in pair.into_inner() {
+        // Match the rule of the inner pair to determine the nickname component type
+        match inner_pair.as_rule() {
+            // If it matches Rule::primary, push the trimmed string to nickname vector
+            Rule::primary => {
+                nickname.push(inner_pair.as_str().trim_matches('"').to_string());
+            },
+            // If it matches Rule::valuation, push the trimmed string to nickname vector
+            Rule::valuation => {
+                nickname.push(inner_pair.as_str().trim_matches('"').to_string());
+            },
+            // Ignore other rules
+            _ => ()
+        }
+    }
+
+    // Return the nickname vector wrapped in `Some`, indicating successful extraction
+    Some(nickname)
+}
+
 /// Builds a G3CSS elements node from a parsing pair based on its rule.
 ///
 /// # Parameters
@@ -11,6 +50,8 @@ use crate::Rule;
 /// Option containing the constructed G3CSS elements node if matched, or None if the rule doesn't match.
 pub fn build_ast_from_elements(pair: pest::iterators::Pair<Rule>) -> Option<G3cssElements> {
     match pair.as_rule() {
+        // Collects the value from the nickname rule.
+        Rule::nickname => Some(G3cssElements::Nickname(build_node_from_nickname(pair)?)),
         // Collects the value from the aspect_ratio rule.
         Rule::aspect_ratio => Some(G3cssElements::AspectRatio(
             pair.as_str().trim_matches('"').to_string(),
