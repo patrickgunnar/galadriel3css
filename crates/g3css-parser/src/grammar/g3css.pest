@@ -156,15 +156,17 @@ panoramic_children = _{
     first_line | first_letter | before | after | out_of_range | root | first_page | left_page | right_page | empty
 }
 
-media_query = { 
-    leading ~ ":" ~ "{" ~
+prime = { (ALPHANUMERIC+ | "_")* }
+
+breakpoint = { 
+    prime ~ ":" ~ "{" ~
         panoramic_children ~ ("," ~ panoramic_children)* ~ ","?
     ~ "}"
 }
 
 panoramic_viewer = {
     "panoramic_viewer" ~ ":" ~ "{" ~
-        media_query ~ ("," ~ media_query)* ~ ","?
+        breakpoint ~ ("," ~ breakpoint)* ~ ","?
     ~ "}"
 }
 
