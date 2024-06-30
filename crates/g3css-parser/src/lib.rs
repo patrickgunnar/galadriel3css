@@ -180,47 +180,112 @@ fn build_nodes_from_classes(pair: pest::iterators::Pair<Rule>) -> Option<Vec<Vec
     Some(nodes)
 }
 
+/// Removes leading and trailing whitespace from the input string.
+///
+/// Splits the input string by whitespace and returns the first segment without leading or trailing whitespace.
+/// Returns an empty string if the input is empty or consists only of whitespace.
+///
+/// # Arguments
+///
+/// - `input` - A reference to a string slice (`&str`) from which whitespace should be removed.
+///
+/// # Returns
+///
+/// A new `String` with leading and trailing whitespace removed from the input, or an empty string if no non-whitespace characters are found.
 fn remove_whitespace(input: &str) -> String {
+    // Split the input string by whitespace and retrieve the first segment without leading or trailing whitespace
     input.split_whitespace().next().unwrap_or("").to_string()
 }
 
+/// Generates a vector of strings representing an alias from a Pest `Pair`.
+///
+/// Constructs a vector of strings based on inner pairs of the provided `Pair`.
+/// Returns `Some(Vec<String>)` with the constructed alias vector, or `None` if
+/// parsing or construction fails.
+///
+/// # Arguments
+///
+/// - `pair` - A `Pair` from the Pest parser representing alias components.
+///
+/// # Returns
+///
+/// An `Option<Vec<String>>` containing the constructed vector of strings
+/// representing an alias, or `None` if parsing fails.
 fn generates_alias_vec(pair: pest::iterators::Pair<Rule>) -> Option<Vec<String>> {
+    // Create an empty vector to hold the alias components
     let mut alias = vec![];
 
+    // Iterate over each inner pair within the provided pair
     for inner_pair in pair.into_inner() {
+        // Match the rule of the inner pair to determine the alias component type
         match inner_pair.as_rule() {
+            // If it matches Rule::leading, push the trimmed string to alias vector
             Rule::leading => {
                 alias.push(remove_whitespace(inner_pair.as_str()));
             }
+            // If it matches Rule::importance, push the trimmed string to alias vector
             Rule::importance => {
                 alias.push(remove_whitespace(inner_pair.as_str()));
             }
+            // Ignore other rules
             _ => (),
         }
     }
 
+    // Return the alias vector wrapped in `Some`, indicating successful construction
     Some(alias)
 }
 
+/// Builds an AST node representing a G3css alias from a Pest `Pair`.
+///
+/// Constructs an AST node based on the rule of the provided `Pair`.
+/// Returns `Some(G3cssAlias)` with the constructed alias, or `None` if
+/// the rule does not match known aliases.
+///
+/// # Arguments
+///
+/// - `pair` - A `Pair` from the Pest parser representing an alias rule.
+///
+/// # Returns
+///
+/// An `Option<G3cssAlias>` containing the constructed AST node representing
+/// an alias, or `None` if the rule does not match known aliases.
 fn build_ast_from_alias(pair: pest::iterators::Pair<Rule>) -> Option<G3cssAlias> {
     match pair.as_rule() {
-        Rule::accent_color => Some(G3cssAlias::Alias([].to_vec())),
+        // Construct an alias node for generic alias using a helper function
         Rule::alias => Some(G3cssAlias::Alias(generates_alias_vec(pair)?)),
+        // Return None for unrecognized rules
         _ => None,
     }
 }
 
+/// Builds nodes from aliases parsed by Pest.
+///
+/// Parses each inner pair from the provided `Pair`, constructs an AST node
+/// using `build_ast_from_alias`, and collects valid nodes into a `Vec<G3cssAlias>`.
+///
+/// # Arguments
+///
+/// - `pair` - A `Pair` from the Pest parser representing parsed aliases.
+///
+/// # Returns
+///
+/// An `Option<Vec<G3cssAlias>>` containing parsed AST nodes representing aliases,
+/// or `None` if parsing fails.
 fn build_nodes_from_aliases(pair: pest::iterators::Pair<Rule>) -> Option<Vec<G3cssAlias>> {
+    // Create an empty vector to hold the parsed nodes
     let mut nodes = vec![];
 
+    // Iterate over each inner pair within the provided pair
     for inner_pair in pair.into_inner() {
-        // Attempt to build nodes from each `inner_pair` by calling `build_nodes_from_class`.
-        // If the function returns `Some`, push the result into the `nodes` vector.
+        // Attempt to build an AST node from the inner pair
         if let Some(node) = build_ast_from_alias(inner_pair) {
+            // If successful, push the node onto the vector
             nodes.push(node);
         }
     }
 
+    // Return the vector of nodes wrapped in `Some`, indicating successful parsing
     Some(nodes)
 }
 
