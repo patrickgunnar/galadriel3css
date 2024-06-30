@@ -55,11 +55,16 @@ pub enum G3cssAlias {
     Alias(Vec<String>),
 }
 
+#[derive(PartialEq, Debug, Clone)]
+pub enum G3cssVariable {
+    Variable(Vec<String>)
+}
+
 /// Enum representing different types of children elements in the G3CSS framework
 #[derive(PartialEq, Debug, Clone)]
 pub enum G3cssChildren {
     Aliases(Vec<G3cssAlias>),
-    Variables(String),
+    Variables(Vec<G3cssVariable>),
     Class(Vec<G3cssClass>),
     Classes(Vec<Vec<G3cssClass>>),
 }
