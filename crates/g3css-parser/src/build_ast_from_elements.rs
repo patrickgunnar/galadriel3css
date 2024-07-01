@@ -1,6 +1,4 @@
-use g3css_common::G3cssElements;
-
-use crate::Rule;
+use crate::{types::g3css_elements::G3cssElements, Rule};
 
 /// Builds a nickname vector from a Pest `Pair`.
 ///
@@ -27,13 +25,13 @@ fn build_node_from_nickname(pair: pest::iterators::Pair<Rule>) -> Option<Vec<Str
             // If it matches Rule::primary, push the trimmed string to nickname vector
             Rule::primary => {
                 nickname.push(inner_pair.as_str().trim_matches('"').to_string());
-            },
+            }
             // If it matches Rule::valuation, push the trimmed string to nickname vector
             Rule::valuation => {
                 nickname.push(inner_pair.as_str().trim_matches('"').to_string());
-            },
+            }
             // Ignore other rules
-            _ => ()
+            _ => (),
         }
     }
 

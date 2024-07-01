@@ -1,11 +1,26 @@
-use std::rc::Rc;
-
-use g3css_common::{
-    G3cssAlias, G3cssChildren, G3cssClass, G3cssElements, G3cssNode, G3cssPanoramic, G3cssTheme,
-    G3cssVariable,
-};
 use pest::{error::Error, Parser};
 use pest_derive::Parser;
+use std::rc::Rc;
+
+pub mod types {
+    pub mod g3css_alias;
+    pub mod g3css_children;
+    pub mod g3css_class;
+    pub mod g3css_elements;
+    pub mod g3css_node;
+    pub mod g3css_panoramic;
+    pub mod g3css_theme;
+    pub mod g3css_variable;
+}
+
+use types::g3css_alias::G3cssAlias;
+use types::g3css_children::G3cssChildren;
+use types::g3css_class::G3cssClass;
+use types::g3css_elements::G3cssElements;
+use types::g3css_node::G3cssNode;
+use types::g3css_panoramic::G3cssPanoramic;
+use types::g3css_theme::G3cssTheme;
+use types::g3css_variable::G3cssVariable;
 
 mod build_ast_from_elements;
 use build_ast_from_elements::build_ast_from_elements;
