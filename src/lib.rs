@@ -5,5 +5,12 @@ pub use g3css_parser::*;
 pub use g3css_transformer::*;
 
 pub fn run_framework(file_path: &str) {
-    g3css_parser(file_path);
+    match g3css_parser(file_path) {
+        Ok(ast) => {
+            println!("{:#?}", ast);
+        }
+        Err(error) => {
+            println!("{:#?}", error);
+        }
+    }
 }
