@@ -47,6 +47,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "g3css-ast"
+version = "0.1.0"
+dependencies = [
+ "g3css-parser",
+]
+
+[[package]]
 name = "g3css-common"
 version = "0.1.0"
 
@@ -85,6 +92,7 @@ dependencies = [
 name = "galadriel3css"
 version = "0.1.0"
 dependencies = [
+ "g3css-ast",
  "g3css-common",
  "g3css-lsp",
  "g3css-observer",
