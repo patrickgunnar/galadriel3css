@@ -14,7 +14,7 @@ use crate::{types::g3css_elements::G3cssElements, Rule};
 ///
 /// An `Option<Vec<String>>` containing the parts of the nickname, or `None`
 /// if extraction fails.
-fn build_node_from_nickname(pair: pest::iterators::Pair<Rule>) -> Option<Vec<String>> {
+pub fn build_node_from_nickname(pair: pest::iterators::Pair<Rule>) -> Option<Vec<String>> {
     // Create an empty vector to hold the parts of the nickname
     let mut nickname: Vec<String> = vec![];
 
