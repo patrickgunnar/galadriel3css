@@ -84,8 +84,13 @@ pub fn g3css_parser(file_path: &str) {
         Ok(raw_file) => {
             // If successfully read, `raw_file` contains the file's contents.
             // Attempt to parse the raw file into an abstract syntax tree (AST).
-            if let Ok(ast) = parse(&raw_file) {
-                println!("{:#?}", ast);
+            match parse(&raw_file) {
+                Ok(ast) => {
+                    println!("{:#?}", ast);
+                }
+                Err(error) => {
+                    println!("{:#?}", error);
+                }
             }
         }
         Err(error) => {
