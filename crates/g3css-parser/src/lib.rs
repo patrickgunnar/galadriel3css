@@ -3,6 +3,7 @@ pub mod types {
     pub mod g3css_children;
     pub mod g3css_class;
     pub mod g3css_elements;
+    pub mod g3css_error;
     pub mod g3css_node;
     pub mod g3css_panoramic;
     pub mod g3css_theme;
@@ -26,6 +27,7 @@ use pest::{error::Error, Parser};
 use pest_derive::Parser;
 use rustal::ast_handlers::build_ast_from_rule;
 use std::rc::Rc;
+use types::g3css_error::G3cssError;
 use types::g3css_node::G3cssNode;
 
 #[derive(Parser)]
@@ -78,24 +80,26 @@ fn parse(src: &str) -> Result<Rc<G3cssNode>, Error<Rule>> {
 ///
 /// # Parameters
 /// - `file_path`: Path to the G3CSS file to parse.
-pub fn g3css_parser(file_path: &str) {
+pub fn g3css_parser(file_path: &str) -> Result<Rc<G3cssNode>, G3cssError> {
     // Attempt to read the contents of the file specified by `file_path`.
     match std::fs::read_to_string(file_path) {
         Ok(raw_file) => {
             // If successfully read, `raw_file` contains the file's contents.
             // Attempt to parse the raw file into an abstract syntax tree (AST).
             match parse(&raw_file) {
+                // Return the AST wrapped in Ok if parsing is successful.
                 Ok(ast) => {
-                    println!("{:#?}", ast);
+                    return Ok(ast);
                 }
+                // Return a G3cssError::ParseError if there is an error during parsing.
                 Err(error) => {
-                    println!("{:#?}", error);
+                    return Err(G3cssError::ParseError(error));
                 }
             }
         }
+        // Return a G3cssError::OtherError if there is an error reading the file.
         Err(error) => {
-            println!("Can't read G3CSS file!");
-            println!("{}", error);
+            return Err(G3cssError::OtherError(error.to_string()));
         }
     }
 }
