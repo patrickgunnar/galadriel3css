@@ -32,36 +32,46 @@ use types::g3css_node::G3cssNode;
 #[grammar = "grammar/g3css.pest"]
 struct G3cssParser;
 
-/// Parses a source string into an abstract syntax tree (AST) of G3CSS nodes.
+/// Parses the source string `src` and returns a Result containing either a reference-counted
+/// G3cssNode or an Error.
 ///
-/// # Parameters
-/// - `src`: Source string containing G3CSS code to parse.
+/// # Arguments
+///
+/// - `src` - A string slice that holds the source code to be parsed.
 ///
 /// # Returns
-/// Result containing a vector of shared references to G3CSS nodes on success, or an Error if parsing fails.
-fn parse(src: &str) -> Result<Vec<Rc<G3cssNode>>, Error<Rule>> {
-    // Initialize an empty vector to store the AST nodes.
-    let mut ast = vec![];
-
+///
+/// - `Result<Rc<G3cssNode>, Error<Rule>>` - Ok containing a reference-counted G3cssNode
+///   if parsing is successful, or an Err containing an Error if parsing fails.
+fn parse(src: &str) -> Result<Rc<G3cssNode>, Error<Rule>> {
     // Attempt to parse the source string using the G3cssParser and Rule::program.
     match G3cssParser::parse(Rule::program, src) {
+        // If parsing is successful, process the parsed pairs.
         Ok(pairs) => {
             // Iterate over parsed pairs and build the AST nodes based on their rules.
             for pair in pairs {
                 match pair.as_rule() {
-                    Rule::global => ast.push(Rc::new(build_ast_from_rule(pair).unwrap())),
-                    Rule::component => ast.push(Rc::new(build_ast_from_rule(pair).unwrap())),
+                    // If the rule is a global rule, build the AST node and return it.
+                    Rule::global => {
+                        return Ok(Rc::new(build_ast_from_rule(pair).unwrap()));
+                    }
+                    // If the rule is a component rule, build the AST node and return it.
+                    Rule::component => {
+                        return Ok(Rc::new(build_ast_from_rule(pair).unwrap()));
+                    }
+                    // If the rule does not match any known rules, do nothing.
                     _ => {}
                 }
             }
         }
+        // If parsing fails, return the error.
         Err(error) => {
-            println!("{:?}", error);
+            return Err(error);
         }
     }
 
-    // Return the parsed AST as a Result.
-    Ok(ast)
+    // If no rules match, return a unit type wrapped in a G3cssNode.
+    Ok(Rc::new(G3cssNode::Unit))
 }
 
 /// Parses a G3CSS file into an abstract syntax tree (AST) if successful.
