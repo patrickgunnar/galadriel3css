@@ -8,4 +8,5 @@ pub enum G3cssNode {
     Name(String),
     Extends(String),
     Children(Vec<G3cssChildren>),
+    Unit,
 }
