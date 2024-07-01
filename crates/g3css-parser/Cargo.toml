@@ -8,4 +8,3 @@ edition = "2021"
 [dependencies]
 pest = "2.7.10"
 pest_derive = "2.7.10"
-g3css-common = { path = "../g3css-common" }

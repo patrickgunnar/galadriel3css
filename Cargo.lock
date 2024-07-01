@@ -69,7 +69,6 @@ dependencies = [
 name = "g3css-parser"
 version = "0.1.0"
 dependencies = [
- "g3css-common",
  "pest",
  "pest_derive",
 ]
